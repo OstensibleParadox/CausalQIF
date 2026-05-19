@@ -37,12 +37,8 @@ def equivACB : (α × γ × β) ≃ (α × β × γ) where
 def pmfACB (P : FinitePMF (α × β × γ)) : FinitePMF (α × γ × β) :=
   FinitePMF.comapEquiv equivACB.symm P
 
-def I_A_cond_C_B (P : FinitePMF (α × β × γ)) : ℝ :=
-  condMutualInfo (pmfACB P)
-
 theorem condMutualInfo_eq_zero_of_isMarkovChain (P : FinitePMF (α × β × γ))
-    (hMC : IsMarkovChain P) : I_A_cond_C_B P = 0 := by
-  unfold I_A_cond_C_B
+    (hMC : IsMarkovChain P) : condMutualInfo (pmfACB P) = 0 := by
   refine condMutualInfo_eq_zero_of_condIndep (pmfACB P) ?_
   intro a c b
   simpa [pmfACB, FinitePMF.comapEquiv, equivACB, marginalTriple_Snd, marginalTriple_FstSnd, marginalBC,

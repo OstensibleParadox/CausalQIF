@@ -213,7 +213,7 @@ lemma stateLeakage_eq_I_XZ_W_pmf_from_vars {CutVars : Type} [Fintype CutVars]
     [DecidableEq CutVars]
     (P : Probability.FinitePMF (State × VisibleTrace × MissingTrace))
     (cut : CutSetData State VisibleTrace MissingTrace CutVars) :
-    stateLeakage P = Probability.I_XZ_W (pmf_from_vars P cut) := by
+    stateLeakage P = Probability.condMutualInfo (Probability.pmfXZW (pmf_from_vars P cut)) := by
   let P4 := pmf_from_vars P cut
   have hXW : Probability.entropyOf (Probability.marginalQuad_FstFth P4) =
       Probability.entropyOf (stateVisibleMass P) := by
@@ -242,14 +242,15 @@ lemma stateLeakage_eq_I_XZ_W_pmf_from_vars {CutVars : Type} [Fintype CutVars]
     exact Probability.entropyOf_equiv_eq e (fun smt => Probability.marginalQuad_FstThdFth P4 smt)
       P.pmf
       (fun smt => by simpa using marginalQuad_FstThdFth_eq_P_swap P cut smt)
-  unfold stateLeakage Probability.I_XZ_W
+  rw [Probability.condMutualInfo_pmfXZW]
+  unfold stateLeakage
   rw [hXW, hZW, hW, hXZW]
 
 /-- Information-theoretic capacity of the cut: $I(K; M \mid T)$. -/
 def cutCapacity {CutVars : Type} [Fintype CutVars] [DecidableEq CutVars]
     (P : Probability.FinitePMF (State × VisibleTrace × MissingTrace))
     (cut : CutSetData State VisibleTrace MissingTrace CutVars) : ℝ :=
-  Probability.I_YZ_W (pmf_from_vars P cut)
+  Probability.condMutualInfo (Probability.pmfYZW (pmf_from_vars P cut))
 
 /-! ## Main Cut-Set Bound Theorem -/
 
@@ -267,13 +268,13 @@ theorem stateLeakage_le_of_cutMutualInfo_le {CutVars : Type}
     (h_cap : cutCapacity P cut ≤ C) :
     stateLeakage P ≤ C := by
   let P4 := pmf_from_vars P cut
-  have h_eq : stateLeakage P = Probability.I_XZ_W P4 :=
+  have h_eq : stateLeakage P = Probability.condMutualInfo (Probability.pmfXZW P4) :=
     stateLeakage_eq_I_XZ_W_pmf_from_vars P cut
-  have h_dpi : Probability.I_XZ_W P4 ≤ Probability.I_YZ_W P4 :=
+  have h_dpi : Probability.condMutualInfo (Probability.pmfXZW P4) ≤ Probability.condMutualInfo (Probability.pmfYZW P4) :=
     CausalModel.cond_dpi P4 h_factor
   calc
-    stateLeakage P = Probability.I_XZ_W P4 := h_eq
-    _ ≤ Probability.I_YZ_W P4 := h_dpi
+    stateLeakage P = Probability.condMutualInfo (Probability.pmfXZW P4) := h_eq
+    _ ≤ Probability.condMutualInfo (Probability.pmfYZW P4) := h_dpi
     _ ≤ C := h_cap
 
 end
