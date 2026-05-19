@@ -11,30 +11,34 @@ noncomputable section
 Descendants, ancestors, ancestral subgraph, leaf deletion.
 -/
 
-def Reachable (G : DAG) (u v : ℕ) : Prop :=
-  Relation.ReflTransGen (fun a b => G.HasEdge a b) u v
+variable {V : Type} [DecidableEq V] [Fintype V]
 
-def descendants (G : DAG) (v : ℕ) : Finset ℕ := by
+def reachable (G : DAG V) (u v : V) : Prop :=
+  Relation.ReflTransGen (fun a b => G.hasEdge a b) u v
+
+def descendants (G : DAG V) (v : V) : Finset V := by
   classical
-  exact G.nodes.filter fun w => w ≠ v ∧ Reachable G v w
+  exact G.nodes.filter fun w => w ≠ v ∧ reachable G v w
 
-def ancestors (G : DAG) (v : ℕ) : Finset ℕ := by
+def ancestors (G : DAG V) (v : V) : Finset V := by
   classical
-  exact G.nodes.filter fun u => u ≠ v ∧ Reachable G u v
+  exact G.nodes.filter fun u => u ≠ v ∧ reachable G u v
 
-def nonDescendants (G : DAG) (v : ℕ) : Finset ℕ :=
+def nonDescendants (G : DAG V) (v : V) : Finset V :=
   G.nodes \ ({v} ∪ descendants G v)
 
 namespace DAG
 
-def ancestors (G : DAG) (v : ℕ) : Finset ℕ := by
-  classical
-  exact G.nodes.filter fun u => Reachable G u v
+variable {V : Type} [DecidableEq V] [Fintype V]
 
-def ancestralSubgraphNodes (G : DAG) (S : Finset ℕ) : Finset ℕ :=
+def ancestors (G : DAG V) (v : V) : Finset V := by
+  classical
+  exact G.nodes.filter fun u => reachable G u v
+
+def ancestralSubgraphNodes (G : DAG V) (S : Finset V) : Finset V :=
   S.biUnion fun v => G.ancestors v
 
-def ancestralSubgraph (G : DAG) (S : Finset ℕ) : DAG where
+def ancestralSubgraph (G : DAG V) (S : Finset V) : DAG V where
   nodes := G.ancestralSubgraphNodes S
   edges := G.edges.filter fun e =>
     e.1 ∈ G.ancestralSubgraphNodes S ∧ e.2 ∈ G.ancestralSubgraphNodes S
@@ -44,7 +48,7 @@ def ancestralSubgraph (G : DAG) (S : Finset ℕ) : DAG where
   acyclic :=
     G.acyclic.mono fun _ _ h => (Finset.mem_filter.mp h).1
 
-def deleteLeaf (G : DAG) (v : ℕ) : DAG where
+def deleteLeaf (G : DAG V) (v : V) : DAG V where
   nodes := G.nodes.erase v
   edges := G.edges.filter fun e => e.1 ≠ v ∧ e.2 ≠ v
   edges_subset := by
@@ -55,16 +59,16 @@ def deleteLeaf (G : DAG) (v : ℕ) : DAG where
   acyclic :=
     G.acyclic.mono fun _ _ h => (Finset.mem_filter.mp h).1
 
-lemma deleteLeaf_card_lt {G : DAG} {v : ℕ} (hv : v ∈ G.nodes) :
+lemma deleteLeaf_card_lt {G : DAG V} {v : V} (hv : v ∈ G.nodes) :
     (G.deleteLeaf v).nodes.card < G.nodes.card := by
   simpa [DAG.deleteLeaf] using Finset.card_erase_lt_of_mem hv
 
-lemma mem_ancestors_self (G : DAG) {v : ℕ} (hv : v ∈ G.nodes) :
+lemma mem_ancestors_self (G : DAG V) {v : V} (hv : v ∈ G.nodes) :
     v ∈ G.ancestors v := by
-  simp [DAG.ancestors, hv, Reachable, Relation.ReflTransGen.refl]
+  simp [DAG.ancestors, hv, reachable, Relation.ReflTransGen.refl]
 
-lemma target_mem_nodes_of_reachable {G : DAG} {u v : ℕ}
-    (hreach : Reachable G u v) (hu : u ∈ G.nodes) :
+lemma target_mem_nodes_of_reachable {G : DAG V} {u v : V}
+    (hreach : reachable G u v) (hu : u ∈ G.nodes) :
     v ∈ G.nodes := by
   induction hreach with
   | refl =>
@@ -72,23 +76,23 @@ lemma target_mem_nodes_of_reachable {G : DAG} {u v : ℕ}
   | tail _ hstep _ =>
       exact (G.edges_subset hstep).2
 
-lemma mem_ancestralSubgraphNodes_of_mem {G : DAG} {S : Finset ℕ} {v : ℕ}
+lemma mem_ancestralSubgraphNodes_of_mem {G : DAG V} {S : Finset V} {v : V}
     (hvS : v ∈ S) (hvG : v ∈ G.nodes) :
     v ∈ G.ancestralSubgraphNodes S := by
   exact Finset.mem_biUnion.mpr ⟨v, hvS, G.mem_ancestors_self hvG⟩
 
-lemma mem_ancestors_of_hasEdge_of_mem_ancestors {G : DAG} {u v s : ℕ}
-    (huv : G.HasEdge u v) (hvs : v ∈ G.ancestors s) :
+lemma mem_ancestors_of_hasEdge_of_mem_ancestors {G : DAG V} {u v s : V}
+    (huv : G.hasEdge u v) (hvs : v ∈ G.ancestors s) :
     u ∈ G.ancestors s := by
   classical
   have huG : u ∈ G.nodes := (G.edges_subset huv).1
-  have hreach_v_s : Reachable G v s := (Finset.mem_filter.mp hvs).2
-  have hreach_u_s : Reachable G u s :=
+  have hreach_v_s : reachable G v s := (Finset.mem_filter.mp hvs).2
+  have hreach_u_s : reachable G u s :=
     (Relation.ReflTransGen.single huv).trans hreach_v_s
   exact Finset.mem_filter.mpr ⟨huG, hreach_u_s⟩
 
-lemma mem_ancestralSubgraphNodes_of_hasEdge_left {G : DAG} {S : Finset ℕ} {u v : ℕ}
-    (huv : G.HasEdge u v) (hv : v ∈ G.ancestralSubgraphNodes S) :
+lemma mem_ancestralSubgraphNodes_of_hasEdge_left {G : DAG V} {S : Finset V} {u v : V}
+    (huv : G.hasEdge u v) (hv : v ∈ G.ancestralSubgraphNodes S) :
     u ∈ G.ancestralSubgraphNodes S := by
   rcases Finset.mem_biUnion.mp hv with ⟨s, hsS, hvs⟩
   exact Finset.mem_biUnion.mpr

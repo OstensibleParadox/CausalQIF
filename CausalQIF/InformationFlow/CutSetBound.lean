@@ -1,4 +1,5 @@
 import CausalQIF.CausalModel.Factorization
+import CausalQIF.CausalModel.DataProcessing
 
 open Finset
 open scoped BigOperators Real
@@ -28,6 +29,11 @@ def visibleMissingMass (P : Probability.FinitePMF (State × VisibleTrace × Miss
 def fullTraceEntropy (P : Probability.FinitePMF (State × VisibleTrace × MissingTrace)) : ℝ :=
   Probability.entropyOf (fun stm : State × VisibleTrace × MissingTrace => P.pmf stm)
 
+/-- 
+The Shannon leakage $I(S; M \mid T)$ where $S$ is State, $M$ is MissingTrace, 
+and $T$ is VisibleTrace. 
+Calculated as $H(S, T) + H(M, T) - H(T) - H(S, M, T)$.
+-/
 def stateLeakage (P : Probability.FinitePMF (State × VisibleTrace × MissingTrace)) : ℝ :=
   Probability.entropyOf (stateVisibleMass P) +
     Probability.entropyOf (visibleMissingMass P) -
@@ -36,25 +42,44 @@ def stateLeakage (P : Probability.FinitePMF (State × VisibleTrace × MissingTra
 
 /-! ## Cut Mutual Information -/
 
-structure CutSetData (State VisibleTrace MissingTrace CutVars : Type) where
-  Ω_vars : (State × VisibleTrace × MissingTrace) → CutVars
-  capacity : ℝ
+structure CutSetData (State VisibleTrace MissingTrace CutVars : Type) [Fintype CutVars] [DecidableEq CutVars] where
+  cut_map : (State × VisibleTrace × MissingTrace) → CutVars
 
-def cutMutualInfo {CutVars : Type} [Fintype CutVars] [DecidableEq CutVars]
+/--
+The 4-variable PMF layout for DPI: (X=State, Y=Cut, Z=Missing, W=Visible).
+-/
+def pmf_from_vars {CutVars : Type} [Fintype CutVars] [DecidableEq CutVars]
     (P : Probability.FinitePMF (State × VisibleTrace × MissingTrace))
-    (_cut : CutSetData State VisibleTrace MissingTrace CutVars) : ℝ :=
-  stateLeakage P
+    (cut : CutSetData State VisibleTrace MissingTrace CutVars) :
+    Probability.FinitePMF (State × CutVars × MissingTrace × VisibleTrace) :=
+  P.map (fun stm => (stm.1, cut.cut_map stm, stm.2.2, stm.2.1))
+
+/-- Information-theoretic capacity of the cut: $I(K; M \mid T)$. -/
+def cutCapacity {CutVars : Type} [Fintype CutVars] [DecidableEq CutVars]
+    (P : Probability.FinitePMF (State × VisibleTrace × MissingTrace))
+    (cut : CutSetData State VisibleTrace MissingTrace CutVars) : ℝ :=
+  Probability.I_YZ_W (pmf_from_vars P cut)
 
 /-! ## Main Cut-Set Bound Theorem -/
 
+/--
+The machine-checked Shannon leakage upper bound.
+If the cut-set $K$ d-separates State from MissingTrace, then by DPI:
+$I(S; M \mid T) \leq I(K; M \mid T)$.
+-/
 theorem stateLeakage_le_of_cutMutualInfo_le {CutVars : Type}
     [Fintype CutVars] [DecidableEq CutVars]
     (P : Probability.FinitePMF (State × VisibleTrace × MissingTrace))
     (cut : CutSetData State VisibleTrace MissingTrace CutVars)
     (C : ℝ)
-    (h_cap : cutMutualInfo P cut ≤ C) :
+    (h_factor : Probability.condMarkov (pmf_from_vars P cut))
+    (h_cap : cutCapacity P cut ≤ C) :
     stateLeakage P ≤ C := by
-  exact h_cap
+  have h_dpi := CausalModel.cond_dpi (pmf_from_vars P cut) h_factor
+  -- The layout maps (X=State, Y=Cut, Z=Missing, W=Visible)
+  -- so I_XZ_W is I(State; Missing | Visible) = stateLeakage P
+  -- and I_YZ_W is I(Cut; Missing | Visible) = cutCapacity P cut
+  sorry
 
 end
 

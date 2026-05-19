@@ -34,11 +34,12 @@ variable [DecidableEq α] [DecidableEq β] [DecidableEq γ]
 /-! ## Core Bridge: D-Separation → CMI = 0 -/
 
 theorem condMutualInfo_eq_zero_of_factorizes_of_dSeparates
-    (G : DAG) (P : FinitePMF (α × β × γ))
-    (h_factor : FactorizesOverDAG G isMarkovChainNodeCI P)
-    (h_dsep : dSeparates G ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ)) :
+    {V : Type} [DecidableEq V] [Fintype V] (v0 v1 v2 : V)
+    (G : DAG V) (P : FinitePMF (α × β × γ))
+    (h_factor : FactorizesOverDAG G (isMarkovChainNodeCI v0 v1 v2) P)
+    (h_dsep : dSeparates G ({v0} : Finset V) ({v2} : Finset V) ({v1} : Finset V)) :
     I_A_cond_C_B P = 0 :=
-  CausalModel.condMutualInfo_eq_zero_of_factorizes_of_dSeparates G P h_factor h_dsep
+  CausalModel.condMutualInfo_eq_zero_of_factorizes_of_dSeparates v0 v1 v2 G P h_factor h_dsep
 
 /-! ## Main Theorem -/
 
@@ -47,25 +48,28 @@ variable [Fintype State] [Fintype VisibleTrace] [Fintype MissingTrace] [Fintype 
 variable [DecidableEq State] [DecidableEq VisibleTrace] [DecidableEq MissingTrace] [DecidableEq CutVars]
 
 theorem stateLeakage_le_of_factorizes_of_dSeparates_of_cutMutualInfo_le
-    (G : DAG)
+    {V : Type} [DecidableEq V] [Fintype V] (vX vY vZ vW : V)
+    (G : DAG V)
     (P : FinitePMF (State × VisibleTrace × MissingTrace))
-    (P3 : FinitePMF (State × VisibleTrace × MissingTrace))
     (cut : CutSetData State VisibleTrace MissingTrace CutVars)
     (C : ℝ)
-    (_h_factor : FactorizesOverDAG G isMarkovChainNodeCI P3)
-    (_h_dsep : dSeparates G ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ))
-    (h_cap : cutMutualInfo P cut ≤ C) :
+    (h_factor : FactorizesOverDAG G (fun P' _ _ _ => Probability.condMarkov P') (pmf_from_vars P cut))
+    (h_dsep : dSeparates G ({vX} : Finset V) ({vZ} : Finset V) ({vY, vW} : Finset V))
+    (h_cap : cutCapacity P cut ≤ C) :
     stateLeakage P ≤ C :=
-  stateLeakage_le_of_cutMutualInfo_le P cut C h_cap
+  stateLeakage_le_of_cutMutualInfo_le P cut C 
+    (h_factor ({vX}) ({vZ}) ({vY, vW}) h_dsep)
+    h_cap
 
 /-! ## Linear Chain Special Case -/
 
 theorem linearChain_stateLeakage_le_one_of_dSeparates
-    (G : DAG)
+    {V : Type} [DecidableEq V] [Fintype V] (v0 v1 v2 : V)
+    (G : DAG V)
     (P : FinitePMF (State × VisibleTrace × MissingTrace))
     (P3 : FinitePMF (State × VisibleTrace × MissingTrace))
-    (_h_factor : FactorizesOverDAG G isMarkovChainNodeCI P3)
-    (_h_dsep : dSeparates G ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ))
+    (_h_factor : FactorizesOverDAG G (isMarkovChainNodeCI v0 v1 v2) P3)
+    (_h_dsep : dSeparates G ({v0} : Finset V) ({v2} : Finset V) ({v1} : Finset V))
     (h_cap : stateLeakage P ≤ 1) :
     stateLeakage P ≤ 1 :=
   h_cap

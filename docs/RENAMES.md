@@ -24,10 +24,10 @@ to the new CausalQIF API. No compatibility wrappers are provided.
 
 | Old Name | New Name |
 |----------|----------|
-| `DSeparation.DAG.HasEdge` | `CausalQIF.Graph.DAG.HasEdge` |
+| `DSeparation.DAG.HasEdge` | `CausalQIF.Graph.DAG.hasEdge` |
 | `DSeparation.DAG.dSeparated` | `CausalQIF.Graph.DAG.dSeparated` |
 | `DSeparation.dSeparates` | `CausalQIF.DSeparation.dSeparates` |
-| `DSeparation.DisjointSets` | `CausalQIF.DSeparation.DisjointSets` |
+| `DSeparation.DisjointSets` | `CausalQIF.DSeparation.disjointSets` |
 | `FiniteQuerySandbox.entropy` | `CausalQIF.Probability.entropy` |
 | `FiniteQuerySandbox.condMutualInfo` | `CausalQIF.Probability.condMutualInfo` |
 | `FiniteQuerySandbox.FactorizesOverDAG` | `CausalQIF.CausalModel.FactorizesOverDAG` |
@@ -35,6 +35,8 @@ to the new CausalQIF API. No compatibility wrappers are provided.
 | `InfoTheory.IsMarkovChain` | `CausalQIF.Probability.IsMarkovChain` |
 | `InfoTheory.I_A_cond_C_B` | `CausalQIF.Probability.I_A_cond_C_B` |
 | `FiniteQuerySandbox.I_S_M_cond_Ttilde` | `CausalQIF.InformationFlow.stateLeakage` |
+| `FiniteQuerySandbox.cond_dpi` | `CausalQIF.CausalModel.cond_dpi` |
+| `FiniteQuerySandbox.cutMutualInfo` | `CausalQIF.InformationFlow.cutCapacity` |
 
 ## Theorem Renames
 
@@ -44,6 +46,7 @@ to the new CausalQIF API. No compatibility wrappers are provided.
 | `InfoTheory.cond_mutual_info_zero_of_markov` | `CausalQIF.Probability.condMutualInfo_eq_zero_of_isMarkovChain` |
 | `FiniteQuerySandbox.isMarkovChain_of_factorizes_dsep` | `CausalQIF.CausalModel.isMarkovChain_of_factorizes_of_dSeparates` |
 | `FiniteQuerySandbox.cmi_zero_of_factorizes_dsep` | `CausalQIF.CausalModel.condMutualInfo_eq_zero_of_factorizes_of_dSeparates` |
+| `FiniteQuerySandbox.leakage_bound_of_cut` | `CausalQIF.InformationFlow.stateLeakage_le_of_cutMutualInfo_le` |
 | (new) | `CausalQIF.condMutualInfo_eq_zero_of_factorizes_of_dSeparates` |
 | (new) | `CausalQIF.stateLeakage_le_of_factorizes_of_dSeparates_of_cutMutualInfo_le` |
 | (new) | `CausalQIF.linearChain_stateLeakage_le_one_of_dSeparates` |

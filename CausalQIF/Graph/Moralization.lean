@@ -13,31 +13,33 @@ Co-parents, moral graph, d-separation graph, `DAG.dSeparated`.
 
 namespace DAG
 
-def coParents (G : DAG) (u v : ℕ) : Prop :=
-  ∃ w : ℕ, G.HasEdge u w ∧ G.HasEdge v w ∧ u ≠ v
+variable {V : Type} [DecidableEq V] [Fintype V]
 
-def moralGraph (G : DAG) (S : Finset ℕ) : SimpleGraph ℕ where
+def coParents (G : DAG V) (u v : V) : Prop :=
+  ∃ w : V, G.hasEdge u w ∧ G.hasEdge v w ∧ u ≠ v
+
+def moralGraph (G : DAG V) (S : Finset V) : SimpleGraph V where
   Adj u v :=
     let G' := G.ancestralSubgraph S
     u ∈ G'.nodes ∧ v ∈ G'.nodes ∧ u ≠ v ∧
-      (G'.HasEdge u v ∨ G'.HasEdge v u ∨ G'.coParents u v)
+      (G'.hasEdge u v ∨ G'.hasEdge v u ∨ G'.coParents u v)
   symm := by
     intro u v h
     dsimp at h ⊢
     rcases h with ⟨hu, hv, hne, hedge | hedge | hcop⟩
     · exact ⟨hv, hu, Ne.symm hne, Or.inr (Or.inl hedge)⟩
     · exact ⟨hv, hu, Ne.symm hne, Or.inl hedge⟩
-    · rcases hcop with ⟨w, huw, hvw, huv⟩
-      exact ⟨hv, hu, Ne.symm hne, Or.inr (Or.inr ⟨w, hvw, huw, Ne.symm huv⟩)⟩
+    · rcases hcop with ⟨w, huw, hvw, huw_ne⟩
+      exact ⟨hv, hu, Ne.symm hne, Or.inr (Or.inr ⟨w, hvw, huw, Ne.symm huw_ne⟩)⟩
   loopless := by
     constructor
     intro u h
     exact h.2.2.1 rfl
 
-def dSeparationGraphNodes (G : DAG) (X Y Z : Finset ℕ) : Finset ℕ :=
+def dSeparationGraphNodes (G : DAG V) (X Y Z : Finset V) : Finset V :=
   G.ancestralSubgraphNodes (X ∪ Y ∪ Z) \ Z
 
-def dSeparationGraph (G : DAG) (X Y Z : Finset ℕ) : SimpleGraph ℕ where
+def dSeparationGraph (G : DAG V) (X Y Z : Finset V) : SimpleGraph V where
   Adj u v :=
     u ∈ G.dSeparationGraphNodes X Y Z ∧
       v ∈ G.dSeparationGraphNodes X Y Z ∧
@@ -50,18 +52,18 @@ def dSeparationGraph (G : DAG) (X Y Z : Finset ℕ) : SimpleGraph ℕ where
     intro u h
     exact (G.moralGraph (X ∪ Y ∪ Z)).loopless.irrefl u h.2.2
 
-def dSeparated (G : DAG) (X Y Z : Finset ℕ) : Prop :=
+def dSeparated (G : DAG V) (X Y Z : Finset V) : Prop :=
   ∀ x, x ∈ X → ∀ y, y ∈ Y → ¬(G.dSeparationGraph X Y Z).Reachable x y
 
 lemma mem_dSeparationGraphNodes_of_ancestor_not_mem
-    {G : DAG} {X Y Z : Finset ℕ} {v : ℕ}
+    {G : DAG V} {X Y Z : Finset V} {v : V}
     (hvA : v ∈ G.ancestralSubgraphNodes (X ∪ Y ∪ Z))
     (hvZ : v ∉ Z) :
     v ∈ G.dSeparationGraphNodes X Y Z := by
   exact Finset.mem_sdiff.mpr ⟨hvA, hvZ⟩
 
 lemma mem_dSeparationGraphNodes_of_mem_left
-    {G : DAG} {X Y Z : Finset ℕ} {v : ℕ}
+    {G : DAG V} {X Y Z : Finset V} {v : V}
     (hvX : v ∈ X) (hvG : v ∈ G.nodes) (hvZ : v ∉ Z) :
     v ∈ G.dSeparationGraphNodes X Y Z := by
   exact mem_dSeparationGraphNodes_of_ancestor_not_mem
@@ -71,7 +73,7 @@ lemma mem_dSeparationGraphNodes_of_mem_left
     hvZ
 
 lemma mem_dSeparationGraphNodes_of_mem_right
-    {G : DAG} {X Y Z : Finset ℕ} {v : ℕ}
+    {G : DAG V} {X Y Z : Finset V} {v : V}
     (hvY : v ∈ Y) (hvG : v ∈ G.nodes) (hvZ : v ∉ Z) :
     v ∈ G.dSeparationGraphNodes X Y Z := by
   exact mem_dSeparationGraphNodes_of_ancestor_not_mem
@@ -80,7 +82,8 @@ lemma mem_dSeparationGraphNodes_of_mem_right
       (G := G) (S := X ∪ Y ∪ Z) (v := v) (by simp [hvY]) hvG)
     hvZ
 
-lemma not_mem_right_of_disjoint_left {X Z : Finset ℕ} {v : ℕ}
+omit [DecidableEq V] [Fintype V] in
+lemma not_mem_right_of_disjoint_left {X Z : Finset V} {v : V}
     (hXZ : Disjoint X Z) (hvX : v ∈ X) :
     v ∉ Z := by
   intro hvZ
