@@ -61,6 +61,27 @@ theorem stateLeakage_le_of_factorizes_of_dSeparates_of_cutMutualInfo_le
     (h_factor ({vX}) ({vZ}) ({vY, vW}) h_dsep)
     h_cap
 
+/--
+The Grand Finale: certified Shannon leakage gap from d-separated traces.
+Elevates a structural topological capacity bound into an absolute operational
+security limit for an auditor: `H(S ∣ T̃) ≤ H(S ∣ T_full) + C`.
+-/
+theorem certified_leakage_gap_of_dSeparated_graph
+    {V : Type} [DecidableEq V] [Fintype V] (vX vY vZ vW : V)
+    (G : DAG V)
+    (P : FinitePMF (State × VisibleTrace × MissingTrace))
+    (cut : CutSetData State VisibleTrace MissingTrace CutVars)
+    (C : ℝ)
+    (h_factor : FactorizesOverDAG G (fun P' _ _ _ => Probability.condMarkov P') (pmf_from_vars P cut))
+    (h_dsep : dSeparates G ({vX} : Finset V) ({vZ} : Finset V) ({vY, vW} : Finset V))
+    (h_cap : cutCapacity P cut ≤ C) :
+    H_S_cond_Ttilde P ≤ H_S_cond_Tfull P + C := by
+  have h_mi_bound :=
+    stateLeakage_le_of_factorizes_of_dSeparates_of_cutMutualInfo_le
+      vX vY vZ vW G P cut C h_factor h_dsep h_cap
+  rw [entropy_security_decomposition P]
+  exact add_le_add (le_refl _) h_mi_bound
+
 /-! ## Linear Chain Special Case -/
 
 theorem linearChain_stateLeakage_le_one_of_dSeparates

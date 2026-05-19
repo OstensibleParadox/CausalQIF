@@ -1,12 +1,13 @@
-import Mathlib
-import FiniteQuerySandbox.InfoTheory
+import CausalQIF.Probability.Entropy
 
 open Finset
 open scoped BigOperators Real
 
-namespace FiniteQuerySandbox
+namespace CausalQIF.InformationFlow
 
 noncomputable section
+
+open Probability
 
 /-! ## Marginal of Y from a 4-variable PMF -/
 
@@ -129,4 +130,5 @@ def KKT_Certificate.of_direct_bound
   }
 
 end
-end FiniteQuerySandbox
+
+end CausalQIF.InformationFlow
