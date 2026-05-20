@@ -38,7 +38,7 @@ theorem condMutualInfo_eq_zero_of_factorizes_of_dSeparates
     (G : DAG V) (P : FinitePMF (α × β × γ))
     (h_factor : FactorizesOverDAG G (isMarkovChainNodeCI v0 v1 v2) P)
     (h_dsep : dSeparates G ({v0} : Finset V) ({v2} : Finset V) ({v1} : Finset V)) :
-    condMutualInfo (Probability.pmfACB P) = 0 :=
+    condMutualInfo (Probability.pmfTripleReshapeFstThdSnd P) = 0 :=
   CausalModel.condMutualInfo_eq_zero_of_factorizes_of_dSeparates v0 v1 v2 G P h_factor h_dsep
 
 /-! ## Main Theorem -/

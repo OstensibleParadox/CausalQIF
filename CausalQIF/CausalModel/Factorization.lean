@@ -44,7 +44,7 @@ theorem condMutualInfo_eq_zero_of_factorizes_of_dSeparates
     (G : Graph.DAG V) (P : Probability.FinitePMF (α × β × γ))
     (h_factor : FactorizesOverDAG G (isMarkovChainNodeCI v0 v1 v2) P)
     (h_dsep : DSeparation.dSeparates G ({v0} : Finset V) ({v2} : Finset V) ({v1} : Finset V)) :
-    Probability.condMutualInfo (Probability.pmfACB P) = 0 :=
+    Probability.condMutualInfo (Probability.pmfTripleReshapeFstThdSnd P) = 0 :=
   Probability.condMutualInfo_eq_zero_of_isMarkovChain P
     (isMarkovChain_of_factorizes_of_dSeparates v0 v1 v2 G P h_factor h_dsep)
 

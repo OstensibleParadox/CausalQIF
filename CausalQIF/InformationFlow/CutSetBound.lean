@@ -209,7 +209,7 @@ lemma marginalQuad_FstThdFth_eq_P_swap {CutVars : Type} [Fintype CutVars] [Decid
           simp
 
 /-- The original leakage CMI equals `condMutualInfo` of the `pmfMargOutSnd` of the four-variable cut PMF. -/
-lemma stateLeakage_eq_I_XZ_W_pmf_from_vars {CutVars : Type} [Fintype CutVars]
+lemma stateLeakage_eq_condMutualInfo_pmfMargOutSnd_pmf_from_vars {CutVars : Type} [Fintype CutVars]
     [DecidableEq CutVars]
     (P : Probability.FinitePMF (State × VisibleTrace × MissingTrace))
     (cut : CutSetData State VisibleTrace MissingTrace CutVars) :
@@ -269,7 +269,7 @@ theorem stateLeakage_le_of_cutMutualInfo_le {CutVars : Type}
     stateLeakage P ≤ C := by
   let P4 := pmf_from_vars P cut
   have h_eq : stateLeakage P = Probability.condMutualInfo (Probability.pmfMargOutSnd P4) :=
-    stateLeakage_eq_I_XZ_W_pmf_from_vars P cut
+    stateLeakage_eq_condMutualInfo_pmfMargOutSnd_pmf_from_vars P cut
   have h_dpi : Probability.condMutualInfo (Probability.pmfMargOutSnd P4) ≤ Probability.condMutualInfo (Probability.pmfMargOutFst P4) :=
     CausalModel.cond_dpi P4 h_factor
   calc

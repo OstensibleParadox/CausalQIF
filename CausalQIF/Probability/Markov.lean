@@ -26,20 +26,20 @@ def IsMarkovChain (P : FinitePMF (α × β × γ)) : Prop :=
 
 /-! ## CMI=0 for Markov Chains -/
 
-def equivACB : (α × γ × β) ≃ (α × β × γ) where
+def equivTripleReshapeFstThdSnd : (α × γ × β) ≃ (α × β × γ) where
   toFun x := (x.1, x.2.2, x.2.1)
   invFun x := (x.1, x.2.2, x.2.1)
   left_inv := by intro; rfl
   right_inv := by intro; rfl
 
-def pmfACB (P : FinitePMF (α × β × γ)) : FinitePMF (α × γ × β) :=
-  FinitePMF.comapEquiv equivACB.symm P
+def pmfTripleReshapeFstThdSnd (P : FinitePMF (α × β × γ)) : FinitePMF (α × γ × β) :=
+  FinitePMF.comapEquiv equivTripleReshapeFstThdSnd.symm P
 
 theorem condMutualInfo_eq_zero_of_isMarkovChain (P : FinitePMF (α × β × γ))
-    (hMC : IsMarkovChain P) : condMutualInfo (pmfACB P) = 0 := by
-  refine condMutualInfo_eq_zero_of_condIndep (pmfACB P) ?_
+    (hMC : IsMarkovChain P) : condMutualInfo (pmfTripleReshapeFstThdSnd P) = 0 := by
+  refine condMutualInfo_eq_zero_of_condIndep (pmfTripleReshapeFstThdSnd P) ?_
   intro a c b
-  simpa [pmfACB, FinitePMF.comapEquiv, equivACB, marginalTriple_Snd, marginalTriple_FstSnd, marginalTriple_SndThd,
+  simpa [pmfTripleReshapeFstThdSnd, FinitePMF.comapEquiv, equivTripleReshapeFstThdSnd, marginalTriple_Snd, marginalTriple_FstSnd,
     marginalTriple_Thd, marginalTriple_FstThd, marginalTriple_SndThd] using hMC a b c
 
 end
