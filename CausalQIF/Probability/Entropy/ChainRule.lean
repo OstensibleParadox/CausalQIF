@@ -35,7 +35,7 @@ def marginalQuad_FstSndFth (P : FinitePMF (α × β × γ × δ)) (xyw : α × �
   ∑ z : γ, P.pmf (xyw.1, xyw.2.1, z, xyw.2.2)
 
 
-def equivYZXW : β × γ × (α × δ) ≃ α × β × γ × δ where
+def equivPairFstFthReshape : β × γ × (α × δ) ≃ α × β × γ × δ where
   toFun t := (t.2.2.1, t.1, t.2.1, t.2.2.2)
   invFun t := (t.2.1, t.2.2.1, (t.1, t.2.2.2))
   left_inv := by
@@ -47,7 +47,7 @@ def equivYZXW : β × γ × (α × δ) ≃ α × β × γ × δ where
     rcases t with ⟨x, y, z, w⟩
     rfl
 
-def equivXZYW : α × γ × (β × δ) ≃ α × β × γ × δ where
+def equivPairSndFthReshape : α × γ × (β × δ) ≃ α × β × γ × δ where
   toFun t := (t.1, t.2.2.1, t.2.1, t.2.2.2)
   invFun t := (t.1, t.2.2.1, (t.2.1, t.2.2.2))
   left_inv := by
@@ -59,16 +59,16 @@ def equivXZYW : α × γ × (β × δ) ≃ α × β × γ × δ where
     rcases t with ⟨x, y, z, w⟩
     rfl
 
-def pmfYZXW (P : FinitePMF (α × β × γ × δ)) :
+def pmfPairFstFthReshape (P : FinitePMF (α × β × γ × δ)) :
     FinitePMF (β × γ × (α × δ)) :=
-  FinitePMF.comapEquiv equivYZXW P
+  FinitePMF.comapEquiv equivPairFstFthReshape P
 
-def pmfXZYW (P : FinitePMF (α × β × γ × δ)) :
+def pmfPairSndFthReshape (P : FinitePMF (α × β × γ × δ)) :
     FinitePMF (α × γ × (β × δ)) :=
-  FinitePMF.comapEquiv equivXZYW P
+  FinitePMF.comapEquiv equivPairSndFthReshape P
 
-lemma condMutualInfo_pmfYZXW (P : FinitePMF (α × β × γ × δ)) :
-    condMutualInfo (pmfYZXW P) = entropyOf (marginalQuad_FstSndFth P) +
+lemma cond_mutual_info_pair_fst_fth_reshape (P : FinitePMF (α × β × γ × δ)) :
+    condMutualInfo (pmfPairFstFthReshape P) = entropyOf (marginalQuad_FstSndFth P) +
     entropyOf (marginalQuad_FstThdFth P) -
     entropyOf (marginalQuad_FstFth P) -
     entropyOf P.pmf := by
@@ -84,42 +84,42 @@ lemma condMutualInfo_pmfYZXW (P : FinitePMF (α × β × γ × δ)) :
     left_inv := by intro t; rcases t with ⟨x, z, w⟩; rfl
     right_inv := by intro t; rcases t with ⟨z, x, w⟩; rfl
   }
-  have hXYW : entropyOf (marginalTriple_FstThd (pmfYZXW P)) =
+  have hXYW : entropyOf (marginalTriple_FstThd (pmfPairFstFthReshape P)) =
       entropyOf (marginalQuad_FstSndFth P) := by
     symm
     refine entropyOf_equiv_eq eXYW (marginalQuad_FstSndFth P)
-      (marginalTriple_FstThd (pmfYZXW P)) ?_
+      (marginalTriple_FstThd (pmfPairFstFthReshape P)) ?_
     intro xyw
     rcases xyw with ⟨x, y, w⟩
     rfl
-  have hXZW : entropyOf (marginalTriple_SndThd (pmfYZXW P)) =
+  have hXZW : entropyOf (marginalTriple_SndThd (pmfPairFstFthReshape P)) =
       entropyOf (marginalQuad_FstThdFth P) := by
     symm
     refine entropyOf_equiv_eq eXZW (marginalQuad_FstThdFth P)
-      (marginalTriple_SndThd (pmfYZXW P)) ?_
+      (marginalTriple_SndThd (pmfPairFstFthReshape P)) ?_
     intro xzw
     rcases xzw with ⟨x, z, w⟩
     rfl
-  have hXW : entropyOf (marginalTriple_Thd (pmfYZXW P)) =
+  have hXW : entropyOf (marginalTriple_Thd (pmfPairFstFthReshape P)) =
       entropyOf (marginalQuad_FstFth P) := by
     apply congrArg entropyOf
     funext xw
     rcases xw with ⟨x, w⟩
     rfl
-  have hFull : entropyOf (fun yz_xw : β × γ × (α × δ) => (pmfYZXW P).pmf yz_xw) =
+  have hFull : entropyOf (fun yz_xw : β × γ × (α × δ) => (pmfPairFstFthReshape P).pmf yz_xw) =
       entropyOf P.pmf := by
     symm
-    refine entropyOf_equiv_eq equivYZXW.symm
+    refine entropyOf_equiv_eq equivPairFstFthReshape.symm
       P.pmf
-      (fun yz_xw : β × γ × (α × δ) => (pmfYZXW P).pmf yz_xw) ?_
+      (fun yz_xw : β × γ × (α × δ) => (pmfPairFstFthReshape P).pmf yz_xw) ?_
     intro xyzw
     rcases xyzw with ⟨x, y, z, w⟩
     rfl
   unfold condMutualInfo entropy
   rw [hXYW, hXZW, hXW, hFull]
 
-lemma condMutualInfo_pmfXZYW (P : FinitePMF (α × β × γ × δ)) :
-    condMutualInfo (pmfXZYW P) = entropyOf (marginalQuad_FstSndFth P) +
+lemma cond_mutual_info_pair_snd_fth_reshape (P : FinitePMF (α × β × γ × δ)) :
+    condMutualInfo (pmfPairSndFthReshape P) = entropyOf (marginalQuad_FstSndFth P) +
     entropyOf (marginalQuad_SndThdFth P) -
     entropyOf (marginalQuad_SndFth P) -
     entropyOf P.pmf := by
@@ -135,151 +135,151 @@ lemma condMutualInfo_pmfXZYW (P : FinitePMF (α × β × γ × δ)) :
     left_inv := by intro t; rcases t with ⟨y, z, w⟩; rfl
     right_inv := by intro t; rcases t with ⟨z, y, w⟩; rfl
   }
-  have hXYW : entropyOf (marginalTriple_FstThd (pmfXZYW P)) =
+  have hXYW : entropyOf (marginalTriple_FstThd (pmfPairSndFthReshape P)) =
       entropyOf (marginalQuad_FstSndFth P) := by
     symm
     refine entropyOf_equiv_eq eXYW (marginalQuad_FstSndFth P)
-      (marginalTriple_FstThd (pmfXZYW P)) ?_
+      (marginalTriple_FstThd (pmfPairSndFthReshape P)) ?_
     intro xyw
     rcases xyw with ⟨x, y, w⟩
     rfl
-  have hYZW : entropyOf (marginalTriple_SndThd (pmfXZYW P)) =
+  have hYZW : entropyOf (marginalTriple_SndThd (pmfPairSndFthReshape P)) =
       entropyOf (marginalQuad_SndThdFth P) := by
     symm
     refine entropyOf_equiv_eq eYZW (marginalQuad_SndThdFth P)
-      (marginalTriple_SndThd (pmfXZYW P)) ?_
+      (marginalTriple_SndThd (pmfPairSndFthReshape P)) ?_
     intro yzw
     rcases yzw with ⟨y, z, w⟩
     rfl
-  have hYW : entropyOf (marginalTriple_Thd (pmfXZYW P)) =
+  have hYW : entropyOf (marginalTriple_Thd (pmfPairSndFthReshape P)) =
       entropyOf (marginalQuad_SndFth P) := by
     apply congrArg entropyOf
     funext yw
     rcases yw with ⟨y, w⟩
     rfl
-  have hFull : entropyOf (fun xz_yw : α × γ × (β × δ) => (pmfXZYW P).pmf xz_yw) =
+  have hFull : entropyOf (fun xz_yw : α × γ × (β × δ) => (pmfPairSndFthReshape P).pmf xz_yw) =
       entropyOf P.pmf := by
     symm
-    refine entropyOf_equiv_eq equivXZYW.symm
+    refine entropyOf_equiv_eq equivPairSndFthReshape.symm
       P.pmf
-      (fun xz_yw : α × γ × (β × δ) => (pmfXZYW P).pmf xz_yw) ?_
+      (fun xz_yw : α × γ × (β × δ) => (pmfPairSndFthReshape P).pmf xz_yw) ?_
     intro xyzw
     rcases xyzw with ⟨x, y, z, w⟩
     rfl
   unfold condMutualInfo entropy
   rw [hXYW, hYZW, hYW, hFull]
 
-def equivXZW_Y : (α × γ × δ) × β ≃ α × β × γ × δ where
+def equivMargOutSnd : (α × γ × δ) × β ≃ α × β × γ × δ where
   toFun t := (t.1.1, t.2, t.1.2.1, t.1.2.2)
   invFun t := ((t.1, t.2.2.1, t.2.2.2), t.2.1)
   left_inv := by intro t; rcases t with ⟨⟨x, z, w⟩, y⟩; rfl
   right_inv := by intro t; rcases t with ⟨x, y, z, w⟩; rfl
 
-def pmfXZW (P : FinitePMF (α × β × γ × δ)) : FinitePMF (α × γ × δ) :=
-  marginalizeLeafPMF (FinitePMF.comapEquiv equivXZW_Y P)
+def pmfMargOutSnd (P : FinitePMF (α × β × γ × δ)) : FinitePMF (α × γ × δ) :=
+  marginalizeLeafPMF (FinitePMF.comapEquiv equivMargOutSnd P)
 
-lemma condMutualInfo_pmfXZW (P : FinitePMF (α × β × γ × δ)) :
-    condMutualInfo (pmfXZW P) = entropyOf (marginalQuad_FstFth P) +
+lemma condMutualInfo_marg_out_snd (P : FinitePMF (α × β × γ × δ)) :
+    condMutualInfo (pmfMargOutSnd P) = entropyOf (marginalQuad_FstFth P) +
     entropyOf (marginalQuad_ThdFth P) -
     entropyOf (marginalQuad_Fth P) -
     entropyOf (marginalQuad_FstThdFth P) := by
-  have hXW : entropyOf (marginalTriple_FstThd (pmfXZW P)) = entropyOf (marginalQuad_FstFth P) := by
+  have hXW : entropyOf (marginalTriple_FstThd (pmfMargOutSnd P)) = entropyOf (marginalQuad_FstFth P) := by
     apply congrArg entropyOf
     funext xw
     rcases xw with ⟨x, w⟩
-    dsimp [marginalTriple_FstThd, marginalQuad_FstFth, pmfXZW, marginalizeLeafPMF, FinitePMF.comapEquiv, equivXZW_Y]
+    dsimp [marginalTriple_FstThd, marginalQuad_FstFth, pmfMargOutSnd, marginalizeLeafPMF, FinitePMF.comapEquiv, equivMargOutSnd]
     exact sum_comm
-  have hZW : entropyOf (marginalTriple_SndThd (pmfXZW P)) = entropyOf (marginalQuad_ThdFth P) := by
+  have hZW : entropyOf (marginalTriple_SndThd (pmfMargOutSnd P)) = entropyOf (marginalQuad_ThdFth P) := by
     apply congrArg entropyOf
     funext zw
     rcases zw with ⟨z, w⟩
-    dsimp [marginalTriple_SndThd, marginalQuad_ThdFth, pmfXZW, marginalizeLeafPMF, FinitePMF.comapEquiv, equivXZW_Y]
-  have hW : entropyOf (marginalTriple_Thd (pmfXZW P)) = entropyOf (marginalQuad_Fth P) := by
+    dsimp [marginalTriple_SndThd, marginalQuad_ThdFth, pmfMargOutSnd, marginalizeLeafPMF, FinitePMF.comapEquiv, equivMargOutSnd]
+  have hW : entropyOf (marginalTriple_Thd (pmfMargOutSnd P)) = entropyOf (marginalQuad_Fth P) := by
     apply congrArg entropyOf
     funext w
-    dsimp [marginalTriple_Thd, marginalQuad_Fth, pmfXZW, marginalizeLeafPMF, FinitePMF.comapEquiv, equivXZW_Y]
+    dsimp [marginalTriple_Thd, marginalQuad_Fth, pmfMargOutSnd, marginalizeLeafPMF, FinitePMF.comapEquiv, equivMargOutSnd]
     apply sum_congr rfl; intro x _
     exact sum_comm
-  have hXZW : entropy (pmfXZW P) = entropyOf (marginalQuad_FstThdFth P) := by rfl
+  have hXZW : entropy (pmfMargOutSnd P) = entropyOf (marginalQuad_FstThdFth P) := by rfl
   unfold condMutualInfo
   rw [hXW, hZW, hW, hXZW]
 
-def equivYZW_X : (β × γ × δ) × α ≃ α × β × γ × δ where
+def equivMargOutFst : (β × γ × δ) × α ≃ α × β × γ × δ where
   toFun t := (t.2, t.1.1, t.1.2.1, t.1.2.2)
   invFun t := ((t.2.1, t.2.2.1, t.2.2.2), t.1)
   left_inv := by intro t; rcases t with ⟨⟨y, z, w⟩, x⟩; rfl
   right_inv := by intro t; rcases t with ⟨x, y, z, w⟩; rfl
 
-def pmfYZW (P : FinitePMF (α × β × γ × δ)) : FinitePMF (β × γ × δ) :=
-  marginalizeLeafPMF (FinitePMF.comapEquiv equivYZW_X P)
+def pmfMargOutFst (P : FinitePMF (α × β × γ × δ)) : FinitePMF (β × γ × δ) :=
+  marginalizeLeafPMF (FinitePMF.comapEquiv equivMargOutFst P)
 
-lemma condMutualInfo_pmfYZW (P : FinitePMF (α × β × γ × δ)) :
-    condMutualInfo (pmfYZW P) = entropyOf (marginalQuad_SndFth P) +
+lemma condMutualInfo_marg_out_fst (P : FinitePMF (α × β × γ × δ)) :
+    condMutualInfo (pmfMargOutFst P) = entropyOf (marginalQuad_SndFth P) +
     entropyOf (marginalQuad_ThdFth P) -
     entropyOf (marginalQuad_Fth P) -
     entropyOf (marginalQuad_SndThdFth P) := by
-  have hYW : entropyOf (marginalTriple_FstThd (pmfYZW P)) = entropyOf (marginalQuad_SndFth P) := by
+  have hYW : entropyOf (marginalTriple_FstThd (pmfMargOutFst P)) = entropyOf (marginalQuad_SndFth P) := by
     apply congrArg entropyOf
     funext yw
     rcases yw with ⟨y, w⟩
-    dsimp [marginalTriple_FstThd, marginalQuad_SndFth, pmfYZW, marginalizeLeafPMF, FinitePMF.comapEquiv, equivYZW_X]
+    dsimp [marginalTriple_FstThd, marginalQuad_SndFth, pmfMargOutFst, marginalizeLeafPMF, FinitePMF.comapEquiv, equivMargOutFst]
     exact sum_comm
-  have hZW : entropyOf (marginalTriple_SndThd (pmfYZW P)) = entropyOf (marginalQuad_ThdFth P) := by
+  have hZW : entropyOf (marginalTriple_SndThd (pmfMargOutFst P)) = entropyOf (marginalQuad_ThdFth P) := by
     apply congrArg entropyOf
     funext zw
     rcases zw with ⟨z, w⟩
-    dsimp [marginalTriple_SndThd, marginalQuad_ThdFth, pmfYZW, marginalizeLeafPMF, FinitePMF.comapEquiv, equivYZW_X]
+    dsimp [marginalTriple_SndThd, marginalQuad_ThdFth, pmfMargOutFst, marginalizeLeafPMF, FinitePMF.comapEquiv, equivMargOutFst]
     exact sum_comm
-  have hW : entropyOf (marginalTriple_Thd (pmfYZW P)) = entropyOf (marginalQuad_Fth P) := by
+  have hW : entropyOf (marginalTriple_Thd (pmfMargOutFst P)) = entropyOf (marginalQuad_Fth P) := by
     apply congrArg entropyOf
     funext w
-    dsimp [marginalTriple_Thd, marginalQuad_Fth, pmfYZW, marginalizeLeafPMF, FinitePMF.comapEquiv, equivYZW_X]
+    dsimp [marginalTriple_Thd, marginalQuad_Fth, pmfMargOutFst, marginalizeLeafPMF, FinitePMF.comapEquiv, equivMargOutFst]
     have h1 : (∑ y : β, ∑ z : γ, ∑ leaf : α, P.pmf (leaf, y, z, w)) = ∑ y : β, ∑ leaf : α, ∑ z : γ, P.pmf (leaf, y, z, w) := by
       apply sum_congr rfl; intro y _
       exact sum_comm
     rw [h1]
     exact sum_comm
-  have hYZW : entropy (pmfYZW P) = entropyOf (marginalQuad_SndThdFth P) := by rfl
+  have hYZW : entropy (pmfMargOutFst P) = entropyOf (marginalQuad_SndThdFth P) := by rfl
   unfold condMutualInfo
   rw [hYW, hZW, hW, hYZW]
 
-def equivXYZW : (α × β) × γ × δ ≃ α × β × γ × δ where
+def equivPairFstSnd : (α × β) × γ × δ ≃ α × β × γ × δ where
   toFun t := (t.1.1, t.1.2, t.2.1, t.2.2)
   invFun t := ((t.1, t.2.1), t.2.2.1, t.2.2.2)
   left_inv := by intro t; rcases t with ⟨⟨x, y⟩, z, w⟩; rfl
   right_inv := by intro t; rcases t with ⟨x, y, z, w⟩; rfl
 
-def pmfXYZW (P : FinitePMF (α × β × γ × δ)) : FinitePMF ((α × β) × γ × δ) :=
-  FinitePMF.comapEquiv equivXYZW P
+def pmfPairFstSnd (P : FinitePMF (α × β × γ × δ)) : FinitePMF ((α × β) × γ × δ) :=
+  FinitePMF.comapEquiv equivPairFstSnd P
 
-lemma condMutualInfo_pmfXYZW (P : FinitePMF (α × β × γ × δ)) :
-    condMutualInfo (pmfXYZW P) = entropyOf (marginalQuad_FstSndFth P) +
+lemma cond_mutual_info_pair_fst_snd (P : FinitePMF (α × β × γ × δ)) :
+    condMutualInfo (pmfPairFstSnd P) = entropyOf (marginalQuad_FstSndFth P) +
     entropyOf (marginalQuad_ThdFth P) -
     entropyOf (marginalQuad_Fth P) -
     entropy P := by
-  have hXYW : entropyOf (marginalTriple_FstThd (pmfXYZW P)) = entropyOf (marginalQuad_FstSndFth P) := by
+  have hXYW : entropyOf (marginalTriple_FstThd (pmfPairFstSnd P)) = entropyOf (marginalQuad_FstSndFth P) := by
     let eXYW : (α × β) × δ ≃ α × β × δ := {
       toFun := fun t => (t.1.1, t.1.2, t.2)
       invFun := fun t => ((t.1, t.2.1), t.2.2)
       left_inv := by intro t; rcases t with ⟨⟨x, y⟩, w⟩; rfl
       right_inv := by intro t; rcases t with ⟨x, y, w⟩; rfl
     }
-    refine entropyOf_equiv_eq eXYW (marginalTriple_FstThd (pmfXYZW P)) (marginalQuad_FstSndFth P) ?_
+    refine entropyOf_equiv_eq eXYW (marginalTriple_FstThd (pmfPairFstSnd P)) (marginalQuad_FstSndFth P) ?_
     intro xyw
     rcases xyw with ⟨⟨x, y⟩, w⟩
     rfl
-  have hZW : entropyOf (marginalTriple_SndThd (pmfXYZW P)) = entropyOf (marginalQuad_ThdFth P) := by
+  have hZW : entropyOf (marginalTriple_SndThd (pmfPairFstSnd P)) = entropyOf (marginalQuad_ThdFth P) := by
     apply congrArg entropyOf
     funext zw
     rcases zw with ⟨z, w⟩
-    dsimp [marginalTriple_SndThd, marginalQuad_ThdFth, pmfXYZW, FinitePMF.comapEquiv, equivXYZW]
+    dsimp [marginalTriple_SndThd, marginalQuad_ThdFth, pmfPairFstSnd, FinitePMF.comapEquiv, equivPairFstSnd]
     have h : ∑ xy : α × β, P.pmf (xy.1, xy.2, z, w) = ∑ x : α, ∑ y : β, P.pmf (x, y, z, w) := by
       exact Fintype.sum_prod_type (fun xy => P.pmf (xy.1, xy.2, z, w))
     exact h
-  have hW : entropyOf (marginalTriple_Thd (pmfXYZW P)) = entropyOf (marginalQuad_Fth P) := by
+  have hW : entropyOf (marginalTriple_Thd (pmfPairFstSnd P)) = entropyOf (marginalQuad_Fth P) := by
     apply congrArg entropyOf
     funext w
-    dsimp [marginalTriple_Thd, marginalQuad_Fth, pmfXYZW, FinitePMF.comapEquiv, equivXYZW]
+    dsimp [marginalTriple_Thd, marginalQuad_Fth, pmfPairFstSnd, FinitePMF.comapEquiv, equivPairFstSnd]
     have h1 : (∑ xy : α × β, ∑ z : γ, P.pmf (xy.1, xy.2, z, w)) = ∑ z : γ, ∑ xy : α × β, P.pmf (xy.1, xy.2, z, w) := sum_comm
     rw [h1]
     have h2 : (∑ z : γ, ∑ xy : α × β, P.pmf (xy.1, xy.2, z, w)) = ∑ z : γ, ∑ x : α, ∑ y : β, P.pmf (x, y, z, w) := by
@@ -290,24 +290,24 @@ lemma condMutualInfo_pmfXYZW (P : FinitePMF (α × β × γ × δ)) :
     rw [h3]
     apply sum_congr rfl; intro x _
     exact sum_comm
-  have hXYZW : entropy (pmfXYZW P) = entropy P := by
+  have hXYZW : entropy (pmfPairFstSnd P) = entropy P := by
     symm
-    refine entropyOf_equiv_eq equivXYZW.symm P.pmf (pmfXYZW P).pmf ?_
+    refine entropyOf_equiv_eq equivPairFstSnd.symm P.pmf (pmfPairFstSnd P).pmf ?_
     intro t; rcases t with ⟨x, y, z, w⟩; rfl
   unfold condMutualInfo
   have hP : entropy P = entropyOf P.pmf := rfl
   rw [hXYW, hZW, hW, hXYZW, hP]
 
-lemma I_XY_Z_W_eq_I_XZ_W_add_I_YZ_XW (P : FinitePMF (α × β × γ × δ)) :
-    condMutualInfo (pmfXYZW P) = condMutualInfo (pmfXZW P) + condMutualInfo (pmfYZXW P) := by
-  rw [condMutualInfo_pmfXYZW, condMutualInfo_pmfXZW, condMutualInfo_pmfYZXW]
+lemma cond_mutual_info_pair_fst_snd_eq_add_marg_out_snd_add_pair_fst_fth (P : FinitePMF (α × β × γ × δ)) :
+    condMutualInfo (pmfPairFstSnd P) = condMutualInfo (pmfMargOutSnd P) + condMutualInfo (pmfPairFstFthReshape P) := by
+  rw [cond_mutual_info_pair_fst_snd, condMutualInfo_marg_out_snd, cond_mutual_info_pair_fst_fth_reshape]
   have h_ent : entropy P = entropyOf P.pmf := rfl
   rw [h_ent]
   ring
 
-lemma I_XY_Z_W_eq_I_YZ_W_add_I_XZ_YW (P : FinitePMF (α × β × γ × δ)) :
-    condMutualInfo (pmfXYZW P) = condMutualInfo (pmfYZW P) + condMutualInfo (pmfXZYW P) := by
-  rw [condMutualInfo_pmfXYZW, condMutualInfo_pmfYZW, condMutualInfo_pmfXZYW]
+lemma cond_mutual_info_pair_fst_snd_eq_add_marg_out_fst_add_pair_snd_fth (P : FinitePMF (α × β × γ × δ)) :
+    condMutualInfo (pmfPairFstSnd P) = condMutualInfo (pmfMargOutFst P) + condMutualInfo (pmfPairSndFthReshape P) := by
+  rw [cond_mutual_info_pair_fst_snd, condMutualInfo_marg_out_fst, cond_mutual_info_pair_snd_fth_reshape]
   have h_ent : entropy P = entropyOf P.pmf := rfl
   rw [h_ent]
   ring
@@ -319,17 +319,17 @@ def condMarkov (P : FinitePMF (α × β × γ × δ)) : Prop :=
       =
     marginalQuad_FstSndFth P (x, y, w) * marginalQuad_SndThdFth P (y, z, w)
 
-lemma I_YZ_XW_nonneg (P : FinitePMF (α × β × γ × δ)) : 0 ≤ condMutualInfo (pmfYZXW P) := by
-  exact condMutualInfo_nonneg (pmfYZXW P)
+lemma cond_mutual_info_pair_fst_fth_reshape_nonneg (P : FinitePMF (α × β × γ × δ)) : 0 ≤ condMutualInfo (pmfPairFstFthReshape P) := by
+  exact condMutualInfo_nonneg (pmfPairFstFthReshape P)
 
-lemma I_XZ_YW_eq_zero_of_condMarkov
+lemma cond_mutual_info_pair_snd_fth_reshape_eq_zero_of_cond_markov
     (P : FinitePMF (α × β × γ × δ)) (h : condMarkov P) :
-    condMutualInfo (pmfXZYW P) = 0 := by
-  have hzero := condMutualInfo_eq_zero_of_condIndep (pmfXZYW P) ?_
+    condMutualInfo (pmfPairSndFthReshape P) = 0 := by
+  have hzero := condMutualInfo_eq_zero_of_condIndep (pmfPairSndFthReshape P) ?_
   · exact hzero
   · intro x z yw
     rcases yw with ⟨y, w⟩
-    simpa [condIndep, pmfXZYW, FinitePMF.comapEquiv, equivXZYW, marginalTriple_Thd,
+    simpa [condIndep, pmfPairSndFthReshape, FinitePMF.comapEquiv, equivPairSndFthReshape, marginalTriple_Thd,
       marginalTriple_FstThd, marginalTriple_SndThd, marginalQuad_SndFth, marginalQuad_FstSndFth,
       marginalQuad_SndThdFth] using h x y z w
 

@@ -18,13 +18,11 @@ def marginalTriple_Snd (P : FinitePMF (α × β × γ)) (b : β) : ℝ :=
 def marginalTriple_FstSnd (P : FinitePMF (α × β × γ)) (ab : α × β) : ℝ :=
   ∑ c : γ, P.pmf (ab.1, ab.2, c)
 
-def marginalBC (P : FinitePMF (α × β × γ)) (bc : β × γ) : ℝ :=
-  ∑ a : α, P.pmf (a, bc.1, bc.2)
 
 def IsMarkovChain (P : FinitePMF (α × β × γ)) : Prop :=
   ∀ a b c,
     P.pmf (a, b, c) * marginalTriple_Snd P b =
-      marginalTriple_FstSnd P (a, b) * marginalBC P (b, c)
+      marginalTriple_FstSnd P (a, b) * marginalTriple_SndThd P (b, c)
 
 /-! ## CMI=0 for Markov Chains -/
 
@@ -41,7 +39,7 @@ theorem condMutualInfo_eq_zero_of_isMarkovChain (P : FinitePMF (α × β × γ))
     (hMC : IsMarkovChain P) : condMutualInfo (pmfACB P) = 0 := by
   refine condMutualInfo_eq_zero_of_condIndep (pmfACB P) ?_
   intro a c b
-  simpa [pmfACB, FinitePMF.comapEquiv, equivACB, marginalTriple_Snd, marginalTriple_FstSnd, marginalBC,
+  simpa [pmfACB, FinitePMF.comapEquiv, equivACB, marginalTriple_Snd, marginalTriple_FstSnd, marginalTriple_SndThd,
     marginalTriple_Thd, marginalTriple_FstThd, marginalTriple_SndThd] using hMC a b c
 
 end

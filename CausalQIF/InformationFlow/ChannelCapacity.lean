@@ -64,7 +64,7 @@ structure KKT_Certificate
   C : ℝ
   p_star : β → ℝ
   per_symbol_I : β → ℝ
-  h_weighted_decomp : condMutualInfo (pmfYZW P4) = ∑ y : β, p_star y * per_symbol_I y
+  h_weighted_decomp : condMutualInfo (pmfMargOutFst P4) = ∑ y : β, p_star y * per_symbol_I y
   h_kkt_condition : ∀ y : β, per_symbol_I y ≤ C
   h_p_star_nonneg : ∀ y : β, 0 ≤ p_star y
   h_p_star_sum_one : ∑ y : β, p_star y = 1
@@ -81,9 +81,9 @@ theorem capacity_le_of_kkt
     [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
     (P4 : FinitePMF (α × β × γ × δ))
     (cert : KKT_Certificate P4) :
-    condMutualInfo (pmfYZW P4) ≤ cert.C := by
+    condMutualInfo (pmfMargOutFst P4) ≤ cert.C := by
   calc
-    condMutualInfo (pmfYZW P4) = ∑ y : β, cert.p_star y * cert.per_symbol_I y := cert.h_weighted_decomp
+    condMutualInfo (pmfMargOutFst P4) = ∑ y : β, cert.p_star y * cert.per_symbol_I y := cert.h_weighted_decomp
     _ ≤ ∑ y : β, cert.p_star y * cert.C := by
       refine Finset.sum_le_sum (fun y _ => ?_)
       have hy_nonneg : 0 ≤ cert.p_star y := cert.h_p_star_nonneg y
@@ -99,10 +99,10 @@ theorem capacity_le_of_kkt
 /-! ## Convenience: certificate from a direct bound -/
 
 /--
-Construct a KKT certificate from a direct bound on I_YZ_W and the actual
+Construct a KKT certificate from a direct bound on condMutualInfo (pmfMargOutFst P4) and the actual
 marginal distribution p(y) = marginalQuad_Snd(P4)(y).
 
-The per-symbol terms are all set to I_YZ_W(P4), so the weighted decomposition
+The per-symbol terms are all set to condMutualInfo (pmfMargOutFst P4)(P4), so the weighted decomposition
 holds because Σ_y p(y) = 1.
 -/
 def KKT_Certificate.of_direct_bound
@@ -111,16 +111,16 @@ def KKT_Certificate.of_direct_bound
     [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
     (P4 : FinitePMF (α × β × γ × δ))
     (C : ℝ)
-    (h_bound : condMutualInfo (pmfYZW P4) ≤ C) : KKT_Certificate P4 :=
+    (h_bound : condMutualInfo (pmfMargOutFst P4) ≤ C) : KKT_Certificate P4 :=
   {
     C := C
     p_star := marginalQuad_Snd P4
-    per_symbol_I := fun _ => condMutualInfo (pmfYZW P4)
+    per_symbol_I := fun _ => condMutualInfo (pmfMargOutFst P4)
     h_weighted_decomp := by
       calc
-        condMutualInfo (pmfYZW P4) = (∑ y : β, marginalQuad_Snd P4 y) * condMutualInfo (pmfYZW P4) := by
+        condMutualInfo (pmfMargOutFst P4) = (∑ y : β, marginalQuad_Snd P4 y) * condMutualInfo (pmfMargOutFst P4) := by
           rw [marginalQuad_Snd_sum_one P4, one_mul]
-        _ = ∑ y : β, (marginalQuad_Snd P4 y * condMutualInfo (pmfYZW P4)) := by
+        _ = ∑ y : β, (marginalQuad_Snd P4 y * condMutualInfo (pmfMargOutFst P4)) := by
           rw [Finset.sum_mul]
     h_kkt_condition := by
       intro y
