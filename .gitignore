@@ -8,6 +8,7 @@ lean-toolchain *
 # Local proof experiments
 scratch/
 test_*.lean
+CausalQIF/Graph/Reachability.lean
 
 # Local tooling
 .claude/
