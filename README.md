@@ -32,10 +32,6 @@ CausalQIF/
     main/
     supplement/
     figures/
-  archive/
-    legacy-popl27/
-    legacy-causalqif/
-    legacy-dual-certificate/
   provenance/
     MIGRATION_MANIFEST.md
 ```
@@ -45,15 +41,16 @@ CausalQIF/
 - Lean package: `causal_qif`
 - Lean namespace/library: `CausalQIF`
 - Default import path: `import CausalQIF`
-- Legacy namespaces (`FiniteQuerySandbox`, `CasualQIF`) are preserved only under
-  `archive/*`.
+- Legacy namespaces (`FiniteQuerySandbox`, `CasualQIF`) are preserved only in
+  migration history, not as active workspace trees.
 
 ## Source-of-truth policy
 
 - `lean/CausalQIF.lean` is the build root for the active target.
 - `lean/CausalQIF/Experimental/*` is excluded from the default build until
   bridge obligations are fully discharged.
-- Archive directories are preserved for provenance and comparison.
+- Legacy archive directories are not kept as active workspace trees after
+  cleanup.
 
 ## Quick commands
 

@@ -53,7 +53,7 @@ This map tracks the active dependency structure in the canonical `lean/CausalQIF
 - `Experimental/InfoTheoryBridge` is the explicit pending theorem that should not currently close
   core assumptions.
 - `Experimental/FiniteQueryAudit` is historical bridge logic retained for audit traceability only.
-- `archive/legacy-*` directories are not part of active builds and are excluded from dependency checks.
+- Legacy archive roots are not part of active builds.
 
 ## Canonical check
 

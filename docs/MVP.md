@@ -20,11 +20,9 @@
 
 ## MVP 4 — Archive discipline
 
-- Historical dual-certificate, CasualQIF, and POPL27 material preserved under:
-  - `archive/legacy-dual-certificate`
-  - `archive/legacy-causalqif`
-  - `archive/legacy-popl27`
-- Archive roots are not imported by `CausalQIF.lean`.
+- Historical dual-certificate, CasualQIF, and POPL27 material has been cleaned
+  from active workspace trees after migration.
+- Archive copies are not part of current canonical workspace.
 
 ## MVP 5 — Documentation coherence
 

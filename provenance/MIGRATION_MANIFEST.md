@@ -57,11 +57,13 @@ All paths are relative to this repository root.
 
 ## Archived Legacy Sources
 
+Historical source trees listed below are part of the migration record only.  
+These specific legacy trees were intentionally removed from active build roots.
+
 | Source | Destination | Role | Reason |
 |---|---|---|---|
-| `../popl27/lean4/` | `archive/legacy-popl27/` | Archival | Historical POPL27 formalism retained for provenance, excluded from active build. |
-| `../archive_memos/CasualQIF/CausalQIF` | `archive/legacy-causalqif/CasualQIF` | Archival | Early `CasualQIF` naming lineage and auxiliary notes preserved only as reference. |
-| `../math/dual-certificate/lean4/` | `archive/legacy-dual-certificate/lean4/` | Archival | Snapshot of dual-certificate layout retained to track deltas and enable recovery. |
+| `../popl27/lean4/` | `(removed)` | Archival | Historical POPL27 formalism retained only in provenance records, excluded from active build. |
+| `../archive_memos/CasualQIF/CausalQIF` | `(removed)` | Archival | `CasualQIF` lineage kept for historical context only in migration notes. |
 
 ## Documentation migration
 

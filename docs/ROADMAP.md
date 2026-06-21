@@ -9,10 +9,8 @@ Active work should proceed only against the canonical imports and namespaces.
 
 - Standardize package names: `causal_qif` / `CausalQIF`.
 - Move active source into grouped modules under `lean/CausalQIF`.
-- Migrate historical roots into:
-  - `archive/legacy-dual-certificate`
-  - `archive/legacy-popl27`
-  - `archive/legacy-causalqif`
+- Historical roots were documented during migration; only the active canonical tree
+  is retained in this workspace.
 - Keep bridge material in `Experimental` until assumptions close.
 
 ### Phase B — Core hardening (in progress)
