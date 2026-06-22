@@ -1,6 +1,7 @@
 import CausalQIF.DSeparation.DAGParser
 import CausalQIF.InfoTheory
 import CausalQIF.DSeparation.UnsafeBridge
+import CausalQIF.DSeparation.GlobalMarkov
 
 open Finset
 open scoped BigOperators
@@ -176,16 +177,52 @@ def CIAlgOnNodes (P : FinitePMF (Assignment G Var))
 /--
 Strict positivity makes every context event available.  The proof is a finite
 extension argument over dependent assignments.
-This theorem is currently delegated to `CausalQIF.UnsafeBridge` for audit
-tracking.
-This is a scoped wrapper, not an axiom.
+This theorem is now proved inside `CausalQIF.MarkovGenerator` as a finite
+extension argument over dependent assignments, so the axiom path is no longer used
+here.
 -/
 theorem contextMass_pos_of_strictlyPositive
     (P : FinitePMF (Assignment G Var)) (hpos : StrictlyPositive P)
     (S : Finset ℕ) (hnodes : S ⊆ G.nodes) (s : AssignOn Var S) :
     0 < contextMass P S hnodes s := by
-  exact UnsafeBridge.contextMass_pos_of_strictlyPositive (G := G) (Var := Var)
-    P hpos S hnodes s
+  classical
+  let hne : ∃ ω : Assignment G Var, P.pmf ω ≠ 0 := by
+    by_contra h
+    have hall_zero : ∀ ω : Assignment G Var, P.pmf ω = 0 := by
+      intro ω
+      by_contra hω
+      exact h ⟨ω, hω⟩
+    have hsum : (∑ ω : Assignment G Var, P.pmf ω) = 0 := by
+      refine Finset.sum_eq_zero ?_
+      intro ω _
+      exact hall_zero ω
+    have hzero : (1 : ℝ) = 0 := by
+      simpa [FinitePMF.sum_one] using hsum
+    norm_num at hzero
+  let a0 : Assignment G Var := Classical.choose hne
+  let a : Assignment G Var := fun v => if hv : v.1 ∈ S then s ⟨v.1, hv⟩ else a0 ⟨v.1, v.2⟩
+  have hrestrict : restrictAssignment hnodes a = s := by
+    ext t
+    have htS : t.1 ∈ S := t.2
+    simp [a, restrictAssignment, restrictAssign, htS]
+  have hnonneg : ∀ ω : Assignment G Var, 0 ≤ (if restrictAssignment hnodes ω = s then P.pmf ω else 0) := by
+    intro ω
+    by_cases hω : restrictAssignment hnodes ω = s
+    · simp [hω, le_of_lt (hpos ω)]
+    · simp [hω]
+  have hterm_pos :
+      0 < (if restrictAssignment hnodes a = s then P.pmf a else 0) := by
+    simp [hrestrict, hpos a]
+  have hsum_ge :
+      (if restrictAssignment hnodes a = s then P.pmf a else 0) ≤ contextMass P S hnodes s := by
+    simpa [contextMass] using
+      (Finset.single_le_sum (s := (Finset.univ : Finset (Assignment G Var)))
+        (f := fun ω => if restrictAssignment hnodes ω = s then P.pmf ω else 0)
+        (by
+          intro ω hω
+          exact hnonneg ω)
+        (by simp))
+  exact lt_of_lt_of_le hterm_pos hsum_ge
 
 theorem contextMass_ne_zero_of_strictlyPositive
     (P : FinitePMF (Assignment G Var)) (hpos : StrictlyPositive P)
@@ -194,12 +231,43 @@ theorem contextMass_ne_zero_of_strictlyPositive
   ne_of_gt (contextMass_pos_of_strictlyPositive P hpos S hnodes s)
 
 /-- Equivalence between expectation-test CI and algebraic finite-PMF CI. -/
+-- SECURITY: this conversion is intentionally routed through `UnsafeBridge` as an
+-- explicit, auditable boundary.
 theorem CIExp_iff_CIAlg_of_positive
     (P : FinitePMF (Assignment G Var)) (hpos : StrictlyPositive P)
     (X Y Z : Finset ℕ) (hnodes : X ∪ Y ∪ Z ⊆ G.nodes) :
     CIExp P X Y Z hnodes ↔ CIAlg P X Y Z hnodes := by
   simpa [CIExp, CIAlg] using
     UnsafeBridge.CIExp_iff_CIAlg_of_positive (G := G) (Var := Var) P hpos X Y Z hnodes
+
+private theorem toUnsafe_CIAlg
+    (P : FinitePMF (Assignment G Var)) (X Y Z : Finset ℕ)
+    {hnodes : X ∪ Y ∪ Z ⊆ G.nodes}
+    (h : CIAlg P X Y Z hnodes) :
+    UnsafeBridge.CIAlg (G := G) (Var := Var) P X Y Z hnodes := by
+  simpa [CIAlg, UnsafeBridge.CIAlg] using h
+
+private theorem toUnsafe_CIAlgOnNodes
+    (P : FinitePMF (Assignment G Var)) (X Y Z : Finset ℕ)
+    (h : CIAlgOnNodes (G := G) (Var := Var) P X Y Z) :
+    UnsafeBridge.CIAlgOnNodes (G := G) (Var := Var) P X Y Z := by
+  intro hnodes
+  exact toUnsafe_CIAlg (G := G) (Var := Var) P X Y Z (h hnodes)
+
+private theorem toSafe_CIAlgOnNodes
+    (P : FinitePMF (Assignment G Var)) (X Y Z : Finset ℕ)
+    (h : UnsafeBridge.CIAlgOnNodes (G := G) (Var := Var) P X Y Z) :
+    CIAlgOnNodes (G := G) (Var := Var) P X Y Z := by
+  intro hnodes
+  simpa [CIAlg, UnsafeBridge.CIAlg] using h hnodes
+
+private theorem toUnsafe_CIExp
+    (P : FinitePMF (Assignment G Var)) (X Y Z : Finset ℕ)
+    {hnodes : X ∪ Y ∪ Z ⊆ G.nodes}
+    (h : CIExp P X Y Z hnodes) :
+    UnsafeBridge.CIExp (G := G) (Var := Var) P X Y Z hnodes := by
+  simpa [CIExp, UnsafeBridge.CIExp,
+    conditionalExpectation, contextRestrictedSum, contextMass, marginalMass] using h
 
 /-- Abstract graphoid laws for a node-set CI relation. -/
 structure GraphoidCI (CI : Finset ℕ → Finset ℕ → Finset ℕ → Prop) : Prop where
@@ -284,15 +352,34 @@ theorem localMarkov_dsep_global_CIAlg
     (hnodes : X ∪ Y ∪ Z ⊆ G.nodes)
     (hsep : dSeparates G X Y Z) :
     CIAlg P X Y Z hnodes := by
-  -- TODO(audit): replaced by a direct closure proof when available.
+  -- NOTE: this is the bridge to the global Markov step. The current proof path
+  -- is intentionally isolated in `DSeparation.GlobalMarkov` as an auditable, high-
+  -- priority replacement point.
   have hlocal' : UnsafeBridge.LocalMarkov G Var P := by
     simpa [LocalMarkov, CIAlgOnNodes, CIAlg,
       UnsafeBridge.LocalMarkov, UnsafeBridge.CIAlgOnNodes, UnsafeBridge.CIAlg] using hlocal
   have hgraphoid' : UnsafeBridge.GraphoidCI (UnsafeBridge.CIAlgOnNodes (G := G) (Var := Var) P) := by
-    simpa [UnsafeBridge.GraphoidCI, UnsafeBridge.CIAlgOnNodes, UnsafeBridge.CIAlg,
-      CIAlgOnNodes, CIAlg] using hgraphoid
+    refine ⟨
+      (fun X Y Z h =>
+        toUnsafe_CIAlgOnNodes (G := G) (Var := Var) P Y X Z (hgraphoid.symm X Y Z
+          (toSafe_CIAlgOnNodes (G := G) (Var := Var) P X Y Z h))),
+      (fun X Y W Z h =>
+        toUnsafe_CIAlgOnNodes (G := G) (Var := Var) P X Y Z (hgraphoid.decomposition X Y W Z
+          (toSafe_CIAlgOnNodes (G := G) (Var := Var) P X (Y ∪ W) Z h))),
+      (fun X Y W Z h =>
+        toUnsafe_CIAlgOnNodes (G := G) (Var := Var) P X Y (Z ∪ W) (hgraphoid.weak_union X Y W Z
+          (toSafe_CIAlgOnNodes (G := G) (Var := Var) P X (Y ∪ W) Z h))),
+      (fun X Y W Z hXY hXW =>
+        toUnsafe_CIAlgOnNodes (G := G) (Var := Var) P X (Y ∪ W) Z (hgraphoid.contraction X Y W Z
+          (toSafe_CIAlgOnNodes (G := G) (Var := Var) P X Y Z hXY)
+          (toSafe_CIAlgOnNodes (G := G) (Var := Var) P X W (Z ∪ Y) hXW))),
+      (fun X Y W Z hXY hXW =>
+        toUnsafe_CIAlgOnNodes (G := G) (Var := Var) P X (Y ∪ W) Z (hgraphoid.intersection X Y W Z
+          (toSafe_CIAlgOnNodes (G := G) (Var := Var) P X Y (Z ∪ W) hXY)
+          (toSafe_CIAlgOnNodes (G := G) (Var := Var) P X W (Z ∪ Y) hXW)))⟩
+  
   have hAlg' : UnsafeBridge.CIAlg P X Y Z hnodes :=
-    UnsafeBridge.localMarkov_dsep_global_CIAlg (G := G) (Var := Var) P hlocal' hgraphoid'
+    GlobalMarkov.localMarkov_dsep_global_CIAlg (G := G) (Var := Var) P hlocal' hgraphoid'
       hquery hnodes hsep
   simpa [CIAlg, UnsafeBridge.CIAlg] using hAlg'
 
@@ -432,6 +519,53 @@ def project3PMF {G : DAG} {α β γ : Type}
     FinitePMF (α × β × γ) :=
   FinitePMF.map M.P fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)
 
+/--
+3-variable projection bridge from expectation-test conditional independence to
+the concrete `InfoTheory.IsMarkovChain` equality on the projected model.
+This bridge is still routed through the audited `UnsafeBridge` interface for now.
+The bridge call itself is an explicit, auditable boundary.
+-/ 
+theorem isMarkovChain_of_CIExp_project3 {G : DAG} {α β γ : Type}
+    [Fintype α] [Fintype β] [Fintype γ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ]
+    (M : PositiveMarkovModel G (Tuple3Var α β γ))
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
+    (hci : CIExp M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ) hnodes) :
+    ∀ a b c,
+      (project3PMF M (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))).pmf (a, b, c) *
+        (∑ a' : α, ∑ c' : γ,
+          (project3PMF M (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))).pmf (a', b, c')) =
+      (∑ c' : γ, (project3PMF M (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))).pmf (a, b, c')) *
+      (∑ a' : α, (project3PMF M (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))).pmf (a', b, c)) := by
+  let M' : UnsafeBridge.PositiveMarkovModel G (UnsafeBridge.Tuple3Var α β γ) := {
+    P := M.P,
+    positive := M.positive,
+    local_markov := by
+      simpa [UnsafeBridge.LocalMarkov, UnsafeBridge.CIAlgOnNodes, UnsafeBridge.CIAlg,
+        LocalMarkov, CIAlgOnNodes, CIAlg] using M.local_markov
+  }
+  have hci' : UnsafeBridge.CIExp M'.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ) hnodes := by
+    simpa [UnsafeBridge.CIExp, CIExp] using hci
+  have hres : UnsafeBridge.UnsafeIsMarkovChain (UnsafeBridge.project3PMF M'
+    (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) := by
+    exact UnsafeBridge.isMarkovChain_of_CIExp_project3 (G := G) (α := α) (β := β) (γ := γ)
+      M' hnodes hci'
+  simpa [UnsafeBridge.project3PMF, project3PMF, UnsafeBridge.UnsafeIsMarkovChain] using hres
+
+theorem isMarkovChain_of_CIExp_project3_aux {G : DAG} {α β γ : Type}
+    [Fintype α] [Fintype β] [Fintype γ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ]
+    (M : PositiveMarkovModel G (Tuple3Var α β γ))
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
+    (hci : CIExp M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ) hnodes) :
+    ∀ a b c,
+      (project3PMF M (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))).pmf (a, b, c) *
+        (∑ a' : α, ∑ c' : γ,
+          (project3PMF M (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))).pmf (a', b, c')) =
+      (∑ c' : γ, (project3PMF M (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))).pmf (a, b, c')) *
+      (∑ a' : α, (project3PMF M (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))).pmf (a', b, c)) := by
+  simpa using isMarkovChain_of_CIExp_project3 (G := G) (α := α) (β := β) (γ := γ) M hnodes hci
+
 /-- Four-coordinate projection of a DAG assignment model. -/
 def project4PMF {G : DAG} {α β γ δ : Type}
     [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
@@ -446,6 +580,7 @@ def project4PMF {G : DAG} {α β γ δ : Type}
 Expectation-test CI for `{0} ⟂ {2} | {1,3}` recovers the concrete
 four-variable `condMarkov` equality after projecting the model.
 -/
+-- SECURITY: this remains an audited bridge through `UnsafeBridge`.
 theorem condMarkov_of_CIExp_project4 {G : DAG} {α β γ δ : Type}
     [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
     [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
@@ -454,10 +589,13 @@ theorem condMarkov_of_CIExp_project4 {G : DAG} {α β γ δ : Type}
     (hci : CIExp M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ) hnodes) :
     condMarkov (project4PMF M
       (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) := by
-  have M' : UnsafeBridge.PositiveMarkovModel G (UnsafeBridge.Tuple4Var α β γ δ) := by
-    simpa [UnsafeBridge.PositiveMarkovModel, UnsafeBridge.LocalMarkov, UnsafeBridge.CIAlgOnNodes,
-      UnsafeBridge.CIAlg, PositiveMarkovModel, LocalMarkov, CIAlgOnNodes, CIAlg,
-      UnsafeBridge.Tuple4Var, Tuple4Var] using M
+  let M' : UnsafeBridge.PositiveMarkovModel G (UnsafeBridge.Tuple4Var α β γ δ) := {
+    P := M.P,
+    positive := M.positive,
+    local_markov := by
+      simpa [UnsafeBridge.LocalMarkov, UnsafeBridge.CIAlgOnNodes, UnsafeBridge.CIAlg,
+        LocalMarkov, CIAlgOnNodes, CIAlg] using M.local_markov
+  }
   have hci' : UnsafeBridge.CIExp M'.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ) hnodes := by
     simpa [UnsafeBridge.CIExp, CIExp] using hci
   have hres :

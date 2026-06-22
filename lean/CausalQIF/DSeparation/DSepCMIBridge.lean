@@ -88,20 +88,11 @@ namespace CausalQIF
 
 open InfoTheory
 
-/--
-Expectation-test CI for `{0} ⟂ {2} | {1}` recovers the concrete algebraic
-`IsMarkovChain` condition after projecting the positive model to `(A, B, C)`.
+/-
+The projection bridges for three- and four-variable CI are defined in
+`CausalQIF.MarkovGenerator`; this file keeps the compatibility layer for the
+downstream theorems that use them.
 -/
-theorem isMarkovChain_of_CIExp_project3 {G : DAG} {α β γ : Type}
-    [Fintype α] [Fintype β] [Fintype γ]
-    [DecidableEq α] [DecidableEq β] [DecidableEq γ]
-    (M : PositiveMarkovModel G (Tuple3Var α β γ))
-    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
-    (hci : CIExp M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ) hnodes) :
-    IsMarkovChain (project3PMF M
-      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) := by
-  exact UnsafeBridge.isMarkovChain_of_CIExp_project3 (G := G) (α := α) (β := β) (γ := γ)
-    M hnodes hci
 
 /-- **d-separation implies conditional independence** in the 3-variable
     algebraic form, using the positive-model projection API. -/
@@ -132,6 +123,9 @@ theorem cmi_zero_of_positiveModel_dsep {G : DAG} {α β γ : Type}
   cond_mutual_info_zero_of_markov
     (project3PMF M (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)))
     (isMarkovChain_of_positiveModel_dsep M hquery hnodes h_dsep)
+
+-- `condMarkov_of_positiveModel_dsep_fourVar` is available unchanged from
+-- `CausalQIF.MarkovGenerator` under this same import chain.
 
 example {α β γ : Type}
     [Fintype α] [Fintype β] [Fintype γ]
