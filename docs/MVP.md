@@ -28,6 +28,7 @@
 
 - `docs/LEAN.md` states scope and boundary assumptions.
 - `docs/THEOREM_DEPENDENCIES.md` tracks the active proof stack.
+- `docs/ROADMAP.md` records the split (`MarkovGenerator` → `GlobalMarkov`).
 - `provenance/MIGRATION_MANIFEST.md` records source, destination, role, and rationale for migrated/archived content.
 
 ## Acceptance note

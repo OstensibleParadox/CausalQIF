@@ -30,6 +30,9 @@ This map tracks the active dependency structure in the canonical `lean/CausalQIF
   - provides trail/active-path graph-search lemmas, trail blocking, and bridge lemmas to probabilistic assumptions
   - consumed by `Certificates` and higher-level certificate modules
   - dependencies: `Graph`, `Finset`, and `Mathlib` combinatorics
+  - bridge split:
+    `MarkovGenerator` → `GlobalMarkov` → `UnsafeBridge`, so the unresolved bridge
+    assumptions are now collected in one explicit lower layer.
 
 ## Information theory layer
 
@@ -84,11 +87,10 @@ independent theorems in any contribution tally.
 
 ## Premise ledger (proved vs. assumed)
 
-The active build is `0 sorry / 10 axiom`. Where a result's force depends on an
-externally-supplied hypothesis (not discharged in Lean), it is listed here. These are
-the explicit axioms in `DSeparation/MarkovGenerator` and `DSeparation/DSepCMIBridge`
-(context positivity, graphoid primitives, and projected conditional-Markov extraction), and are
-the explicit reductions carried forward into the premise ledger.
+The active build is `0 sorry / 9 axiom` (all explicit assumptions currently
+reside in `DSeparation/UnsafeBridge.lean`). Where a result's force depends on an
+externally-supplied hypothesis (not discharged in Lean), it is listed here. These
+are the bridge reductions carried forward into the premise ledger:
 They are **reductions**, not closed obligations; paper statements must surface the premise.
 
 | Result | Carried premise (the actual hard part) |
@@ -97,7 +99,7 @@ They are **reductions**, not closed obligations; paper statements must surface t
 | `Certificates/DualCertificate.{condMarkov_deterministicProbePMF, prop2_dynamic_lb_deterministic_probe}` | deterministic probe construction `probe : State → Trace → Probe`; no external `condMarkov` premise |
 | `Certificates/DualCertificate.prop1_static_ub` | `I_S_M_cond_Ttilde P ≤ C_cut Ω` (cut-set capacity bound) |
 | `Certificates/CutSetBoundExtract.{cut_set_dpi_bound, abstract_cut_set_bound}` | `condMarkov (pmf_from_vars …)` + capacity bound |
-| `DSeparation/DSepCMIBridge.cmi_zero_of_positiveModel_dsep` | `PositiveMarkovModel` + `DSeparationQuery` + `dSeparates` for the 3-variable tuple projection; depends on the postulated CI-to-Markov axiom |
+| `DSeparation/DSepCMIBridge.cmi_zero_of_positiveModel_dsep` | `PositiveMarkovModel` + `DSeparationQuery` + `dSeparates` for the 3-variable tuple projection; depends on `isMarkovChain_of_CIExp_project3` in `MarkovGenerator`, which currently routes to `UnsafeBridge.isMarkovChain_of_CIExp_project3` |
 | `Certificates/PACBounds.theorem3_pac_lower_bound` | `PACPaperStatisticalDerivation` fields: Gaussian KL/Fano bound + missed-cell bound, with formulas recorded in Lean and probability proofs supplied by `provenance/fano_bound.md` |
 | `Certificates/EntropicEIS.no_entropic_eis_autoregressive` | deterministic screenability `S = recon(T)`; the finite-Shannon residual-autonomy contradiction is exact |
 | `Certificates/PredictabilityRouteImpossibility.internal_route_impossibility_predictability` | legacy off-root `IsPredictable` surrogate + non-σ-additive `ProbSpace`, not `H(I\|T)>0` |

@@ -26,7 +26,8 @@ Active work should proceed only against the canonical imports and namespaces.
 ### Phase C — Proof roadmap
 
 - Validate bridge path:
-  - bridge graph semantics to conditional-independence assumptions
+  - bridge graph semantics to conditional-independence assumptions via explicit
+    intermediate modules (`MarkovGenerator` → `GlobalMarkov`) and audited boundaries
   - preserve bridge assumptions explicitly in certificate statements
   - avoid introducing non-finite assumptions in active proofs
 - Tighten theorem statements to avoid over-claiming.

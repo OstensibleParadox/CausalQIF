@@ -43,6 +43,12 @@ lean/
 4. Examples:
    `Examples.CaseStudy` provides sanity checks on minimal typed deployments.
 
+The `DSeparation` entry includes the explicit bridge split:
+
+- `DSeparation.MarkovGenerator`: public CI/Markov APIs and projection helpers.
+- `DSeparation.GlobalMarkov`: auditable intermediate for the global Markov bridge.
+- `DSeparation.DSepCMIBridge`: compatibility re-exports for downstream certificate code.
+
 ## Experimental boundary
 
 Pending bridge obligations are kept under:
@@ -52,6 +58,10 @@ Pending bridge obligations are kept under:
 
 `InfoTheoryBridge` is kept imported in the root for API compatibility but currently provides a compatibility boundary, not a closed bridge from DAG to generic finite-model conditional independence.
 `FiniteQueryAudit` is retained as historical bridge logic and is not paper-facing.
+
+`MarkovGenerator` and `DSepCMIBridge` now keep stable public APIs but no longer
+host direct `axiom` declarations; only `UnsafeBridge.lean` holds the explicit
+assumption boundary for this stage.
 
 ## Build target expectation
 

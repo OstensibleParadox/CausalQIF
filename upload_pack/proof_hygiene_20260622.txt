@@ -4,14 +4,14 @@ scope: active build tree lean/CausalQIF (Experimental/* excluded from default bu
 ## BUILD STATUS: PASS
 lake build CausalQIF -> Build completed successfully (8326 jobs), EXIT=0.
 Fix applied: created lean/CausalQIF/InfoTheory.lean (re-exports InfoTheory.all).
-=> 0 sorry / 0 axiom confirmed by CLEAN COMPILE (not just static scan).
+=> 0 sorry / 9 axiom confirmed by CLEAN COMPILE (not just static scan).
 
 ## sorry / admit / axiom — active tree (excluding Experimental)
 lean/CausalQIF/Certificates/GeometricTools.lean:82:/-- The set of points admitting a seen witness with `FCG ≤ L * ρ`. -/
-lean/CausalQIF/Experimental/InfoTheoryBridge.lean:42:  sorry
+lean/CausalQIF/DSeparation/UnsafeBridge.lean: explicit frontier axiom(s): 9 declared
 
 ## sorry / axiom — Experimental (excluded, expected pending)
-lean/CausalQIF/Experimental/InfoTheoryBridge.lean:42:  sorry
+lean/CausalQIF/DSeparation/UnsafeBridge.lean: explicit frontier axiom(s): 9 declared
 
 ## absolute /Users/ paths in source + docs (policy: empty)
 docs/MVP.md:38:- no stale absolute `/Users/` references in docs
@@ -31,4 +31,4 @@ docs/MVP.md:38:- no stale absolute `/Users/` references in docs
 ## d-separation scope
 - soundness proven only under pairwise-disjoint X/Y/Z
 - unrestricted iff proven FALSE: dsep_complete_endpoint_in_Z_counterexample
-- general probabilistic d-sep => CI is the deferred Experimental/InfoTheoryBridge sorry (not in active build)
+- general probabilistic d-sep => CI is the deferred DSeparation/UnsafeBridge frontier axioms (not in active build)

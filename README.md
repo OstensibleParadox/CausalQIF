@@ -61,6 +61,17 @@ CausalQIF/
   ensure no stale absolute paths remain in documentation
 - `rg -n "\\bsorry\\b|\\badmit\\b" lean/CausalQIF` :
   verify active modules are free of placeholders (Experimental module excluded)
+- `rg -n "^\\s*axiom" lean/CausalQIF/DSeparation/UnsafeBridge.lean` :
+  verify unresolved assumptions on the explicit bridge boundary
+
+## Current bridge posture
+
+- `DSeparation/UnsafeBridge.lean` is the single repository location still
+  carrying explicit bridge axioms for this proof frontier (`9` axioms total).
+- `DSeparation/GlobalMarkov.lean` is the explicit intermediate step for the local
+  Markov + graphoid → global d-separation bridge.
+- `DSeparation/MarkovGenerator.lean` and `DSeparation/DSepCMIBridge.lean`
+  keep the public API shape while avoiding direct axiom declarations.
 
 ## Documentation entry points
 
