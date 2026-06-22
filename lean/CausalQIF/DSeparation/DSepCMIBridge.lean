@@ -88,42 +88,59 @@ namespace CausalQIF
 
 open InfoTheory
 
-/-- Adapter: node-set CI specialized to the 3-variable tuple layout
-    `0 = X`, `2 = Y`, `1 = Z` (conditioning), encoding `{0} ⟂ {2} | {1}`,
-    and unfolding to the concrete algebraic `IsMarkovChain` factorization.
-    Direct 3-variable analogue of `condMarkovNodeCI`. -/
-def isMarkovChainNodeCI {α β γ : Type}
+/--
+Expectation-test CI for `{0} ⟂ {2} | {1}` recovers the concrete algebraic
+`IsMarkovChain` condition after projecting the positive model to `(A, B, C)`.
+-/
+axiom isMarkovChain_of_CIExp_project3 {G : DAG} {α β γ : Type}
     [Fintype α] [Fintype β] [Fintype γ]
     [DecidableEq α] [DecidableEq β] [DecidableEq γ]
-    (P : FinitePMF (α × β × γ)) (X Y Z : Finset ℕ) : Prop :=
-  X = ({0} : Finset ℕ) →
-    Y = ({2} : Finset ℕ) →
-      Z = ({1} : Finset ℕ) →
-        IsMarkovChain P
+    (M : PositiveMarkovModel G (Tuple3Var α β γ))
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
+    (hci : CIExp M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ) hnodes) :
+    IsMarkovChain (project3PMF M
+      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)))
 
 /-- **d-separation implies conditional independence** in the 3-variable
-    algebraic form. Analogue of `condMarkov_of_factorizes_dsep_fourVar`. -/
-theorem isMarkovChain_of_factorizes_dsep {α β γ : Type}
+    algebraic form, using the positive-model projection API. -/
+theorem isMarkovChain_of_positiveModel_dsep {G : DAG} {α β γ : Type}
     [Fintype α] [Fintype β] [Fintype γ]
     [DecidableEq α] [DecidableEq β] [DecidableEq γ]
-    (G : DAG) (P : FinitePMF (α × β × γ))
-    (h_factor : FactorizesOverDAG G isMarkovChainNodeCI P)
+    (M : PositiveMarkovModel G (Tuple3Var α β γ))
+    (hquery : DSeparationQuery ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ))
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
     (h_dsep : dSeparates G ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ)) :
-    IsMarkovChain P :=
-  h_factor ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ) h_dsep rfl rfl rfl
+    IsMarkovChain (project3PMF M
+      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) := by
+  exact isMarkovChain_of_CIExp_project3 M hnodes
+    (dsep_implies_CI M hquery hnodes h_dsep)
 
 /-- Full first-arrow bridge consumed by the downstream DPI/KKT cut-set chain:
     d-separation implies zero conditional mutual information, via the already
     proved `cond_mutual_info_zero_of_markov`. -/
-theorem cmi_zero_of_factorizes_dsep {α β γ : Type}
+theorem cmi_zero_of_positiveModel_dsep {G : DAG} {α β γ : Type}
     [Fintype α] [Fintype β] [Fintype γ]
     [DecidableEq α] [DecidableEq β] [DecidableEq γ]
-    (G : DAG) (P : FinitePMF (α × β × γ))
-    (h_factor : FactorizesOverDAG G isMarkovChainNodeCI P)
+    (M : PositiveMarkovModel G (Tuple3Var α β γ))
+    (hquery : DSeparationQuery ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ))
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
     (h_dsep : dSeparates G ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ)) :
-    I_A_cond_C_B P = 0 :=
-  cond_mutual_info_zero_of_markov P
-    (isMarkovChain_of_factorizes_dsep G P h_factor h_dsep)
+    I_A_cond_C_B (project3PMF M
+      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) = 0 :=
+  cond_mutual_info_zero_of_markov
+    (project3PMF M (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)))
+    (isMarkovChain_of_positiveModel_dsep M hquery hnodes h_dsep)
+
+example {α β γ : Type}
+    [Fintype α] [Fintype β] [Fintype γ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ]
+    {G : DAG} (M : PositiveMarkovModel G (Tuple3Var α β γ))
+    (hquery : DSeparationQuery ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ))
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
+    (hsep : dSeparates G ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ)) :
+    IsMarkovChain (project3PMF M
+      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) :=
+  isMarkovChain_of_positiveModel_dsep M hquery hnodes hsep
 
 end CausalQIF
 

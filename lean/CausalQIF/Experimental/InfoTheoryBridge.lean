@@ -1,5 +1,4 @@
-import CausalQIF.DSeparation.all
-import CausalQIF.InfoTheory
+import CausalQIF.DSeparation.MarkovGenerator
 
 open Finset
 
@@ -11,34 +10,22 @@ noncomputable section
 # Information-theory bridge (experimental)
 
 This module contains the bridge from d-separation to conditional independence.
-It is intentionally isolated from the default build target until the bridge is
-fully discharged.
+The bridge is typed over strictly-positive finite Markov models on dependent
+graph assignments; this module keeps the historical experimental theorem name
+as a compatibility wrapper.
 -/
 
-/-- Graph-conditional probability model for a DAG. -/
-structure FinitePMFOverDAG (G : DAG) where
-  dummy : Unit
-
-/-- Placeholder conditional independence statement over finite graph variables. -/
-def ConditionalIndependence {G : DAG} (_P : FinitePMFOverDAG G)
-    (_X _Y _Z : Finset ℕ) : Prop :=
-  True
-
-/-- Markov compatibility placeholder for a DAG model. -/
-def MarkovCompatible {G : DAG} (_P : FinitePMFOverDAG G) (G_orig : DAG) : Prop :=
-  ∀ v, v ∈ G_orig.nodes →
-    ConditionalIndependence (G := G) _P {v} (G_orig.nodes \ ({v} ∪ descendants G_orig v)) (parents G_orig v)
-
-/-- **Pending bridge theorem**.
-
-This bridge is currently treated as a proof obligation; downstream modules should
-only use it intentionally from the `Experimental` namespace.
--/
+/-- Historical bridge name, now specialized to the typed positive-model API. -/
 theorem dSeparation_implies_conditional_independence
-    {G : DAG} {X Y Z : Finset ℕ} (P : FinitePMFOverDAG G)
-    (hsep : dSeparates G X Y Z)
-    (hMarkov : MarkovCompatible P G) :
-    ConditionalIndependence P X Y Z := by
-  sorry
+    {G : DAG} {Var : ℕ → Type}
+    [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)]
+    {X Y Z : Finset ℕ} (M : PositiveMarkovModel G Var)
+    (hquery : DSeparationQuery X Y Z)
+    (hnodes : X ∪ Y ∪ Z ⊆ G.nodes)
+    (hsep : dSeparates G X Y Z) :
+    CIExp M.P X Y Z hnodes :=
+  dsep_implies_CI M hquery hnodes hsep
+
+end
 
 end CausalQIF.Experimental

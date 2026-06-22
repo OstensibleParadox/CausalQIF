@@ -326,18 +326,28 @@ theorem linear_chain_cut_set_bound
 
 /--
 End-to-end case-study bound using the DAG automation interface.  The remaining
-model-specific premises are: a semantic factorization package for the concrete
-four-variable PMF and a d-separation proof for `{0} ⟂ {2} | {1,3}`.
+model-specific premises are: a positive Markov model whose four-coordinate
+projection is the concrete PMF and a d-separation proof for `{0} ⟂ {2} | {1,3}`.
 -/
 theorem linear_chain_cut_set_bound_from_dag
     (G : DAG)
     (P : FinitePMF (State2 × Unit × Missing2))
     (Ω_vars : (State2 × Unit × Missing2) → CutVar2)
-    (h_factor : FactorizesOverDAG G condMarkovNodeCI (pmf_from_vars P Ω_vars))
+    (M : PositiveMarkovModel G (Tuple4Var State2 CutVar2 Missing2 Unit))
+    (hquery : DSeparationQuery ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ))
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ) ⊆ G.nodes)
+    (hproject :
+      project4PMF M
+        (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)) =
+          pmf_from_vars P Ω_vars)
     (h_dsep : dSeparates G ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ)) :
     I_S_M_cond_Ttilde P ≤ 1 := by
+  have h_markov :
+      condMarkov (pmf_from_vars P Ω_vars) := by
+    simpa [hproject] using
+      (condMarkov_of_positiveModel_dsep_fourVar M hquery hnodes h_dsep)
   exact linear_chain_cut_set_bound P Ω_vars
-    (condMarkov_of_factorizes_dsep_fourVar G (pmf_from_vars P Ω_vars) h_factor h_dsep)
+    h_markov
 
 end EndToEnd
 

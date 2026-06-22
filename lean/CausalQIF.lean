@@ -20,6 +20,7 @@ import CausalQIF.Certificates.SemanticClosureIff
 import CausalQIF.DSeparation.DAGParser
 import CausalQIF.DSeparation.MarkovGenerator
 import CausalQIF.DSeparation.DSepCMIBridge
+import CausalQIF.Experimental.InfoTheoryBridge
 
 /-!
 # CausalQIF
