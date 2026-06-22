@@ -23,8 +23,8 @@ bound, and records the explicit paper-derived statistical terms:
    the combined sample-complexity lower bound.
 
 The probability-theoretic derivations are the paper proof in
-`/Users/ostensible_paradox/Documents/math/fano_bound.md`; Lean checks the
-formula interface and the algebraic combination.
+`provenance/fano_bound.md`; Lean checks the formula interface and the algebraic
+combination.
 -/
 
 def PairwiseSeparated {ι : Type} (dist : ι → ι → ℝ) (sep : ℝ) : Prop :=
