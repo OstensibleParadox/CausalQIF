@@ -84,6 +84,7 @@ externally-supplied hypothesis (not discharged in Lean), it is listed here. Thes
 | Result | Carried premise (the actual hard part) |
 | --- | --- |
 | `InfoTheory/DPI.cond_dpi`, `Certificates/DualCertificate.prop2_dynamic_lb` | `condMarkov P` (conditional Markov structure) |
+| `Certificates/DualCertificate.{condMarkov_deterministicProbePMF, prop2_dynamic_lb_deterministic_probe}` | deterministic probe construction `probe : State → Trace → Probe`; no external `condMarkov` premise |
 | `Certificates/DualCertificate.prop1_static_ub` | `I_S_M_cond_Ttilde P ≤ C_cut Ω` (cut-set capacity bound) |
 | `Certificates/CutSetBoundExtract.{cut_set_dpi_bound, abstract_cut_set_bound}` | `condMarkov (pmf_from_vars …)` + capacity bound |
 | `DSeparation/DSepCMIBridge.cmi_zero_of_factorizes_dsep` | `FactorizesOverDAG` (3-variable algebraic Markov case only) |
