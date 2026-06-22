@@ -87,8 +87,13 @@ independent theorems in any contribution tally.
 
 ## Premise ledger (proved vs. assumed)
 
-The active build is `0 sorry / 6 axiom` (all explicit assumptions currently
-reside in `DSeparation/UnsafeBridge.lean`). Where a result's force depends on an
+The active build is `0 sorry / 8 axiom` (all explicit assumptions currently
+reside in `DSeparation/UnsafeBridge.lean`). `CIAlgOnNodes` now carries an
+explicit graph-domain witness rather than quantifying over all containment
+proofs, so out-of-graph node sets no longer make CI premises vacuously true. The
+count includes the two tuple-projection bridge boundaries
+`isMarkovChain_of_CIExp_project3` and `condMarkov_of_CIExp_project4`, which are
+kept explicit pending dedicated finite-assignment projection lemmas. Where a result's force depends on an
 externally-supplied hypothesis (not discharged in Lean), it is listed here. These
 are the bridge reductions carried forward into the premise ledger:
 They are **reductions**, not closed obligations; paper statements must surface the premise.

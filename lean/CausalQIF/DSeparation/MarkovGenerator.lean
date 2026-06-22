@@ -169,10 +169,15 @@ def CIAlg (P : FinitePMF (Assignment G Var)) (X Y Z : Finset ℕ)
         marginalMass P (Y ∪ Z) (subset_YZ_of_union hnodes)
           (restrictAssign (subset_YZ_of_XYZ X Y Z) xyz)
 
-/-- Node-set algebraic CI, quantified over the graph-domain proof. -/
+/--
+Node-set algebraic CI with an explicit graph-domain witness.
+
+This avoids the old vacuity bug where `CIAlgOnNodes P X Y Z` was true whenever
+`X ∪ Y ∪ Z` had no proof of containment in `G.nodes`.
+-/
 def CIAlgOnNodes (P : FinitePMF (Assignment G Var))
     (X Y Z : Finset ℕ) : Prop :=
-  ∀ hnodes : X ∪ Y ∪ Z ⊆ G.nodes, CIAlg P X Y Z hnodes
+  ∃ hnodes : X ∪ Y ∪ Z ⊆ G.nodes, CIAlg P X Y Z hnodes
 
 /--
 Strict positivity makes every context event available.  The proof is a finite
@@ -215,15 +220,15 @@ private theorem toUnsafe_CIAlgOnNodes
     (P : FinitePMF (Assignment G Var)) (X Y Z : Finset ℕ)
     (h : CIAlgOnNodes (G := G) (Var := Var) P X Y Z) :
     UnsafeBridge.CIAlgOnNodes (G := G) (Var := Var) P X Y Z := by
-  intro hnodes
-  exact toUnsafe_CIAlg (G := G) (Var := Var) P X Y Z (h hnodes)
+  rcases h with ⟨hnodes, hci⟩
+  exact ⟨hnodes, toUnsafe_CIAlg (G := G) (Var := Var) P X Y Z hci⟩
 
 private theorem toSafe_CIAlgOnNodes
     (P : FinitePMF (Assignment G Var)) (X Y Z : Finset ℕ)
     (h : UnsafeBridge.CIAlgOnNodes (G := G) (Var := Var) P X Y Z) :
     CIAlgOnNodes (G := G) (Var := Var) P X Y Z := by
-  intro hnodes
-  simpa [CIAlg, UnsafeBridge.CIAlg] using h hnodes
+  rcases h with ⟨hnodes, hci⟩
+  exact ⟨hnodes, by simpa [CIAlg, UnsafeBridge.CIAlg] using hci⟩
 
 private theorem toUnsafe_CIExp
     (P : FinitePMF (Assignment G Var)) (X Y Z : Finset ℕ)
