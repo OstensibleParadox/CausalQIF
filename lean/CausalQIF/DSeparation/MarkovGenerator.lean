@@ -185,44 +185,8 @@ theorem contextMass_pos_of_strictlyPositive
     (P : FinitePMF (Assignment G Var)) (hpos : StrictlyPositive P)
     (S : Finset ℕ) (hnodes : S ⊆ G.nodes) (s : AssignOn Var S) :
     0 < contextMass P S hnodes s := by
-  classical
-  let hne : ∃ ω : Assignment G Var, P.pmf ω ≠ 0 := by
-    by_contra h
-    have hall_zero : ∀ ω : Assignment G Var, P.pmf ω = 0 := by
-      intro ω
-      by_contra hω
-      exact h ⟨ω, hω⟩
-    have hsum : (∑ ω : Assignment G Var, P.pmf ω) = 0 := by
-      refine Finset.sum_eq_zero ?_
-      intro ω _
-      exact hall_zero ω
-    have hzero : (1 : ℝ) = 0 := by
-      simpa [FinitePMF.sum_one] using hsum
-    norm_num at hzero
-  let a0 : Assignment G Var := Classical.choose hne
-  let a : Assignment G Var := fun v => if hv : v.1 ∈ S then s ⟨v.1, hv⟩ else a0 ⟨v.1, v.2⟩
-  have hrestrict : restrictAssignment hnodes a = s := by
-    ext t
-    have htS : t.1 ∈ S := t.2
-    simp [a, restrictAssignment, restrictAssign, htS]
-  have hnonneg : ∀ ω : Assignment G Var, 0 ≤ (if restrictAssignment hnodes ω = s then P.pmf ω else 0) := by
-    intro ω
-    by_cases hω : restrictAssignment hnodes ω = s
-    · simp [hω, le_of_lt (hpos ω)]
-    · simp [hω]
-  have hterm_pos :
-      0 < (if restrictAssignment hnodes a = s then P.pmf a else 0) := by
-    simp [hrestrict, hpos a]
-  have hsum_ge :
-      (if restrictAssignment hnodes a = s then P.pmf a else 0) ≤ contextMass P S hnodes s := by
-    simpa [contextMass] using
-      (Finset.single_le_sum (s := (Finset.univ : Finset (Assignment G Var)))
-        (f := fun ω => if restrictAssignment hnodes ω = s then P.pmf ω else 0)
-        (by
-          intro ω hω
-          exact hnonneg ω)
-        (by simp))
-  exact lt_of_lt_of_le hterm_pos hsum_ge
+  simpa [UnsafeBridge.contextMass_pos_of_strictlyPositive] using
+    (UnsafeBridge.contextMass_pos_of_strictlyPositive (G := G) (Var := Var) P hpos S hnodes s)
 
 theorem contextMass_ne_zero_of_strictlyPositive
     (P : FinitePMF (Assignment G Var)) (hpos : StrictlyPositive P)

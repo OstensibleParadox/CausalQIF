@@ -87,7 +87,7 @@ independent theorems in any contribution tally.
 
 ## Premise ledger (proved vs. assumed)
 
-The active build is `0 sorry / 9 axiom` (all explicit assumptions currently
+The active build is `0 sorry / 6 axiom` (all explicit assumptions currently
 reside in `DSeparation/UnsafeBridge.lean`). Where a result's force depends on an
 externally-supplied hypothesis (not discharged in Lean), it is listed here. These
 are the bridge reductions carried forward into the premise ledger:
