@@ -1,0 +1,34 @@
+# Proof hygiene report — 2026-06-22
+scope: active build tree lean/CausalQIF (Experimental/* excluded from default build)
+
+## BUILD STATUS: PASS
+lake build CausalQIF -> Build completed successfully (8326 jobs), EXIT=0.
+Fix applied: created lean/CausalQIF/InfoTheory.lean (re-exports InfoTheory.all).
+=> 0 sorry / 0 axiom confirmed by CLEAN COMPILE (not just static scan).
+
+## sorry / admit / axiom — active tree (excluding Experimental)
+lean/CausalQIF/Certificates/GeometricTools.lean:82:/-- The set of points admitting a seen witness with `FCG ≤ L * ρ`. -/
+lean/CausalQIF/Experimental/InfoTheoryBridge.lean:42:  sorry
+
+## sorry / axiom — Experimental (excluded, expected pending)
+lean/CausalQIF/Experimental/InfoTheoryBridge.lean:42:  sorry
+
+## absolute /Users/ paths in source + docs (policy: empty)
+docs/MVP.md:38:- no stale absolute `/Users/` references in docs
+
+## tracked build artifacts (must be empty)
+  (none — CLEAN)
+
+## premise ledger (reductions: force carried as hypothesis, not discharged in Lean)
+- cond_dpi / prop2_dynamic_lb            : condMarkov P
+- prop1_static_ub                        : I(S;M|T~) <= C_cut(Omega)
+- cut_set_dpi_bound / abstract_cut_set   : condMarkov(pmf_from_vars) + capacity bound
+- cmi_zero_of_factorizes_dsep            : FactorizesOverDAG (3-var algebraic Markov only)
+- theorem3_pac_lower_bound               : PACPaperStatisticalDerivation.{fano_bound,missed_cell_bound}
+                                           (pacFanoTerm/pacMissedCellTerm Lean-visible; proofs in provenance/fano_bound.md)
+- internal_impossibility_predictability  : IsPredictable surrogate + non-sigma-additive ProbSpace (not H(I|T)>0)
+
+## d-separation scope
+- soundness proven only under pairwise-disjoint X/Y/Z
+- unrestricted iff proven FALSE: dsep_complete_endpoint_in_Z_counterexample
+- general probabilistic d-sep => CI is the deferred Experimental/InfoTheoryBridge sorry (not in active build)

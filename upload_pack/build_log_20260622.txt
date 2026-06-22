@@ -1,0 +1,84 @@
+# CausalQIF build log — 2026-06-22
+host: Darwin 25.6.0 arm64
+lake: error: no default toolchain configured. run `elan default stable` to install & configure the latest Lean 4 stable release.
+lean: error: no default toolchain configured. run `elan default stable` to install & configure the latest Lean 4 stable release.
+pinned mathlib rev (lakefile): @ "0e265f2ff3987cdc4757407f55f3dbfc06d52ab5"
+toolchain file: leanprover/lean4:v4.30.0-rc1
+---- lake build (active target) ----
+warning: manifest out of date: git revision of dependency 'mathlib' changed; use `lake update mathlib` to update it
+✖ [0/0] Running job computation
+error: no such file or directory (error code: 4294967294)
+  file: /Users/ostensible_paradox/Documents/math/CausalQIF/lean/CausalQIF/InfoTheory.lean
+Some required targets logged failures:
+- job computation
+error: build failed
+EXIT=1 (recorded)
+
+## KNOWN BUILD BLOCKERS (2026-06-22)
+1. Toolchain not configured in this environment (elan: no default toolchain).
+   -> install: elan default leanprover/lean4:v4.30.0-rc1  (matches lean-toolchain).
+2. STRUCTURAL: CausalQIF.lean:2 'import CausalQIF.InfoTheory' resolves to
+   lean/CausalQIF/InfoTheory.lean which DOES NOT EXIST. Aggregator module is at
+   InfoTheory/InfoTheory.lean (= module CausalQIF.InfoTheory.InfoTheory).
+   Fix: create lean/CausalQIF/InfoTheory.lean re-exporting the group,
+        OR change import to CausalQIF.InfoTheory.InfoTheory (or .all).
+3. Manifest out of date vs pinned lakefile rev: run 'lake update mathlib' once
+   (resolves to the same pinned SHA 0e265f2f; just re-syncs lake-manifest.json).
+
+==== RE-RUN after creating CausalQIF/InfoTheory.lean (04:03:10) ====
+warning: manifest out of date: git revision of dependency 'mathlib' changed; use `lake update mathlib` to update it
+✖ [1152/1783] Building CausalQIF.InfoTheory (289ms)
+trace: .> LEAN_PATH=/Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/packages/Cli/.lake/build/lib/lean:/Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/packages/batteries/.lake/build/lib/lean:/Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/packages/Qq/.lake/build/lib/lean:/Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/packages/aesop/.lake/build/lib/lean:/Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/packages/proofwidgets/.lake/build/lib/lean:/Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/packages/importGraph/.lake/build/lib/lean:/Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/packages/plausible/.lake/build/lib/lean:/Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/packages/mathlib/.lake/build/lib/lean:/Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/build/lib/lean /Users/ostensible_paradox/.elan/toolchains/leanprover--lean4---v4.30.0-rc1/bin/lean /Users/ostensible_paradox/Documents/math/CausalQIF/lean/CausalQIF/InfoTheory.lean -o /Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/build/lib/lean/CausalQIF/InfoTheory.olean -i /Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/build/lib/lean/CausalQIF/InfoTheory.ilean -c /Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/build/ir/CausalQIF/InfoTheory.c --setup /Users/ostensible_paradox/Documents/math/CausalQIF/lean/.lake/build/ir/CausalQIF/InfoTheory.setup.json --json
+error: CausalQIF/InfoTheory.lean:9:0: invalid 'import' command, it must be used in the beginning of the file
+error: Lean exited with code 1
+✔ [1780/2376] Built CausalQIF.Certificates.Tools (319ms)
+✔ [8292/8318] Built CausalQIF.Certificates.Screenability (246ms)
+✔ [8293/8318] Built CausalQIF.Certificates.Impossibility (235ms)
+✔ [8294/8318] Built CausalQIF.Certificates.TraceRecoverability (249ms)
+✔ [8295/8318] Built CausalQIF.Certificates.ScreenabilityBridge (249ms)
+✔ [8296/8318] Built CausalQIF.Certificates.FiniteQueryDecisionImpossibility (237ms)
+✔ [8297/8318] Built CausalQIF.Certificates.TraceRecoverabilityBridge (217ms)
+✔ [8298/8318] Built CausalQIF.Certificates.InternalImpossibility (1.2s)
+✔ [8299/8318] Built CausalQIF.Certificates.GeometricTools (1.7s)
+✔ [8300/8318] Built CausalQIF.Certificates.PredictabilityRouteImpossibility (1.2s)
+✔ [8301/8318] Built CausalQIF.Certificates.GeometricImpossibility (1.8s)
+✔ [8302/8318] Built CausalQIF.Certificates.CoveringBound (1.9s)
+✔ [8303/8318] Built CausalQIF.Certificates.SemanticClosureIff (4.1s)
+✔ [8304/8318] Built CausalQIF.Graph.Basic (4.1s)
+✔ [8305/8318] Built CausalQIF.Certificates.SeparatedPackingImpossibility (1.4s)
+✔ [8306/8318] Built CausalQIF.Certificates.QuotientFactorization (3.3s)
+✔ [8307/8318] Built CausalQIF.Graph.Ancestry (3.3s)
+✔ [8308/8318] Built CausalQIF.Graph.Moralization (3.3s)
+✔ [8309/8318] Built CausalQIF.DSeparation.Trail (3.5s)
+✔ [8310/8318] Built CausalQIF.DSeparation.BayesBall (3.2s)
+✔ [8311/8318] Built CausalQIF.DSeparation.DAG (3.9s)
+✔ [8312/8318] Built CausalQIF.DSeparation.all (2.9s)
+✔ [8313/8318] Built CausalQIF.DSeparation.DAGParser (2.9s)
+Some required targets logged failures:
+- CausalQIF.InfoTheory
+error: build failed
+EXIT=1 (124=timeout)
+
+==== RE-RUN 2 after import-order fix (04:04:02) ====
+warning: manifest out of date: git revision of dependency 'mathlib' changed; use `lake update mathlib` to update it
+✔ [8307/8326] Built CausalQIF.InfoTheory.Basic (3.2s)
+✔ [8308/8326] Built CausalQIF.InfoTheory.Marginal (3.5s)
+✔ [8309/8326] Built CausalQIF.InfoTheory.KL (3.7s)
+✔ [8310/8326] Built CausalQIF.InfoTheory.Entropy (3.5s)
+✔ [8311/8326] Built CausalQIF.InfoTheory.MutualInfo (3.4s)
+✔ [8312/8326] Built CausalQIF.InfoTheory.Conditional (3.6s)
+✔ [8313/8326] Built CausalQIF.InfoTheory.DPI (3.5s)
+✔ [8314/8326] Built CausalQIF.InfoTheory.all (2.9s)
+✔ [8315/8326] Built CausalQIF.InfoTheory (2.9s)
+✔ [8316/8326] Built CausalQIF.Certificates.QuantizedBound (4.6s)
+✔ [8317/8326] Built CausalQIF.DSeparation.MarkovGenerator (4.6s)
+✔ [8318/8326] Built CausalQIF.Certificates.CMI_Nonneg (4.7s)
+✔ [8319/8326] Built CausalQIF.Certificates.DualCertificate (4.8s)
+✔ [8320/8326] Built CausalQIF.Certificates.ChannelCapacity (5.0s)
+✔ [8321/8326] Built CausalQIF.Certificates.IdentifiabilityGap (5.5s)
+✔ [8322/8326] Built CausalQIF.DSeparation.DSepCMIBridge (3.4s)
+✔ [8323/8326] Built CausalQIF.Certificates.CutSetBoundExtract (3.4s)
+✔ [8324/8326] Built CausalQIF.Examples.CaseStudy (3.7s)
+✔ [8325/8326] Built CausalQIF (2.9s)
+Build completed successfully (8326 jobs).
+EXIT=0 (124=timeout)
