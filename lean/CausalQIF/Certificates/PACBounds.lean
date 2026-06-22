@@ -1,25 +1,30 @@
 import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Real.Basic
+import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Tactic.Linarith
 
 namespace CausalQIF
 
+noncomputable section
+
 /-!
 # PAC Packing Lower-Bound Core
 
-This file does **not** formalize the full Gaussian KL / Fano theorem. Instead it
-formalizes the algebraic and decision-theoretic core used by the paper's PAC
-packing lower bound:
+This file does **not** formalize the full Gaussian experiment, KL calculation,
+Fano theorem, or missed-cell conditioning argument. Instead it formalizes the
+algebraic and decision-theoretic core used by the paper's PAC packing lower
+bound, and records the explicit paper-derived statistical terms:
 
 1. the spike reward family is separated in `L1(Px)` by `alpha * tau`;
 2. if a learner is within `epsilon < sep / 4` of the true reward in a separated
    family, nearest-neighbor decoding recovers the hidden cell index;
-3. if an external statistical argument supplies a Fano lower bound and a
-   missed-cell lower bound for that index-recovery problem, the combined lower
-   bound is their maximum.
+3. the paper proof supplies concrete Fano and missed-cell lower-bound terms;
+4. once those two paper statistical derivations are supplied, their maximum is
+   the combined sample-complexity lower bound.
 
-The probability-theoretic step deriving those two lower bounds from Gaussian
-observations remains a paper proof sketch, not a Lean theorem.
+The probability-theoretic derivations are the paper proof in
+`/Users/ostensible_paradox/Documents/math/fano_bound.md`; Lean checks the
+formula interface and the algebraic combination.
 -/
 
 def PairwiseSeparated {ι : Type} (dist : ι → ι → ℝ) (sep : ℝ) : Prop :=
@@ -132,34 +137,64 @@ theorem combine_fano_and_missed_cell_bounds
   max_le hfano hmissed
 
 /-!
-### Explicit Assumption Wrappers
+### Paper-Derived Statistical Terms
 
-To make the boundary between Lean-checked algebra and paper-proved statistics
-completely rigorous, we wrap the external Fano and missed-cell lower bounds
-in explicit assumption structures. The probabilistic derivations (Gaussian KL
-and independent missed-cell probabilities) remain external to the Lean formalization.
+The paper proof constructs a Gaussian spike experiment with `K` disjoint cells
+of mass `alpha`, spike height `tau`, observation noise `sigma`, and failure
+probability `delta`. The resulting statistical lower-bound terms are recorded
+as concrete Lean definitions.
 -/
 
 /--
-External Fano/KL premise: proved via standard information-theoretic
-arguments in the paper, not checked in Lean.
+Fano/KL term from the paper proof:
+
+`sigma^2 / (alpha * tau^2) * (1 + 1/K)^2 *
+  ((1 - delta) * log (K + 1) - log 2)`.
 -/
-structure AssumesFanoBound (m fanoTerm : ℝ) : Prop where
-  bound : fanoTerm ≤ m
+def pacFanoTerm (K : Nat) (alpha tau sigma delta : ℝ) : ℝ :=
+  (sigma ^ 2 / (alpha * tau ^ 2)) *
+    (1 + 1 / (K : ℝ)) ^ 2 *
+      ((1 - delta) * Real.log ((K : ℝ) + 1) - Real.log 2)
 
 /--
-External missed-cell premise: proved via independent sampling arguments
-in the paper, not checked in Lean.
+Missed-cell term from the paper proof:
+
+`log (1 / (2 * delta)) / (-log (1 - alpha))`.
 -/
-structure AssumesMissedCellBound (m missedCellTerm : ℝ) : Prop where
-  bound : missedCellTerm ≤ m
+def pacMissedCellTerm (alpha delta : ℝ) : ℝ :=
+  Real.log (1 / (2 * delta)) / (-Real.log (1 - alpha))
 
 /--
-The combined external statistical premise for the PAC lower bound.
+Parameter side conditions used by the paper proof of the statistical layer.
+They are recorded at the interface so the theorem statement exposes the same
+domain as the handwritten argument.
 -/
-structure PACStatisticalPremises (m fanoTerm missedCellTerm : ℝ) : Prop where
-  fano : AssumesFanoBound m fanoTerm
-  missed : AssumesMissedCellBound m missedCellTerm
+structure PACPaperHypotheses
+    (K : Nat) (alpha tau sigma epsilon delta : ℝ) : Prop where
+  K_pos : 0 < K
+  alpha_pos : 0 < alpha
+  alpha_lt_one : alpha < 1
+  tau_pos : 0 < tau
+  sigma_pos : 0 < sigma
+  epsilon_pos : 0 < epsilon
+  epsilon_lt_sep_quarter : epsilon < alpha * tau / 4
+  delta_pos : 0 < delta
+  delta_lt_half : delta < 1 / 2
+
+/--
+Concrete paper statistical derivation for the two hard paper-only arguments:
+
+* Gaussian KL + Fano for `fano_bound`;
+* missed-cell indistinguishability for `missed_cell_bound`.
+
+The formulas are Lean-visible; the probability-theoretic proofs of the two
+fields remain the external paper proof.
+-/
+structure PACPaperStatisticalDerivation
+    (K : Nat) (m alpha tau sigma epsilon delta : ℝ) : Prop where
+  hypotheses : PACPaperHypotheses K alpha tau sigma epsilon delta
+  fano_bound : pacFanoTerm K alpha tau sigma delta ≤ m
+  missed_cell_bound : pacMissedCellTerm alpha delta ≤ m
 
 /-!
 ### Paper-Facing Conditional Theorems
@@ -167,22 +202,24 @@ structure PACStatisticalPremises (m fanoTerm missedCellTerm : ℝ) : Prop where
 
 /--
 Conditional PAC Lower Bound Wrapper.
-This theorem explicitly takes the external statistical assumptions as inputs,
-yielding the combined sample complexity lower bound.
+This theorem explicitly takes the paper statistical derivation as input,
+yielding the concrete combined sample-complexity lower bound.
 -/
 theorem pac_lower_bound_conditional
-    {m fanoTerm missedCellTerm : ℝ}
-    (h_ext : PACStatisticalPremises m fanoTerm missedCellTerm) :
-    max fanoTerm missedCellTerm ≤ m :=
-  combine_fano_and_missed_cell_bounds h_ext.fano.bound h_ext.missed.bound
+    {K : Nat} {m alpha tau sigma epsilon delta : ℝ}
+    (h_ext : PACPaperStatisticalDerivation K m alpha tau sigma epsilon delta) :
+    max (pacFanoTerm K alpha tau sigma delta) (pacMissedCellTerm alpha delta) ≤ m :=
+  combine_fano_and_missed_cell_bounds h_ext.fano_bound h_ext.missed_cell_bound
 
 /--
 Alias matching the paper's Theorem 3 narrative for the combined result.
 -/
 theorem theorem3_pac_lower_bound
-    {m fanoTerm missedCellTerm : ℝ}
-    (h_ext : PACStatisticalPremises m fanoTerm missedCellTerm) :
-    max fanoTerm missedCellTerm ≤ m :=
+    {K : Nat} {m alpha tau sigma epsilon delta : ℝ}
+    (h_ext : PACPaperStatisticalDerivation K m alpha tau sigma epsilon delta) :
+    max (pacFanoTerm K alpha tau sigma delta) (pacMissedCellTerm alpha delta) ≤ m :=
   pac_lower_bound_conditional h_ext
+
+end
 
 end CausalQIF
