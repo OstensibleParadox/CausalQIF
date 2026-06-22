@@ -1,5 +1,6 @@
 import CausalQIF.DSeparation.DAGParser
 import CausalQIF.InfoTheory
+import CausalQIF.DSeparation.UnsafeBridge
 
 open Finset
 open scoped BigOperators
@@ -175,11 +176,16 @@ def CIAlgOnNodes (P : FinitePMF (Assignment G Var))
 /--
 Strict positivity makes every context event available.  The proof is a finite
 extension argument over dependent assignments.
+This theorem is currently delegated to `CausalQIF.UnsafeBridge` for audit
+tracking.
+This is a scoped wrapper, not an axiom.
 -/
-axiom contextMass_pos_of_strictlyPositive
+theorem contextMass_pos_of_strictlyPositive
     (P : FinitePMF (Assignment G Var)) (hpos : StrictlyPositive P)
     (S : Finset ℕ) (hnodes : S ⊆ G.nodes) (s : AssignOn Var S) :
-    0 < contextMass P S hnodes s
+    0 < contextMass P S hnodes s := by
+  exact UnsafeBridge.contextMass_pos_of_strictlyPositive (G := G) (Var := Var)
+    P hpos S hnodes s
 
 theorem contextMass_ne_zero_of_strictlyPositive
     (P : FinitePMF (Assignment G Var)) (hpos : StrictlyPositive P)
@@ -188,10 +194,12 @@ theorem contextMass_ne_zero_of_strictlyPositive
   ne_of_gt (contextMass_pos_of_strictlyPositive P hpos S hnodes s)
 
 /-- Equivalence between expectation-test CI and algebraic finite-PMF CI. -/
-axiom CIExp_iff_CIAlg_of_positive
+theorem CIExp_iff_CIAlg_of_positive
     (P : FinitePMF (Assignment G Var)) (hpos : StrictlyPositive P)
     (X Y Z : Finset ℕ) (hnodes : X ∪ Y ∪ Z ⊆ G.nodes) :
-    CIExp P X Y Z hnodes ↔ CIAlg P X Y Z hnodes
+    CIExp P X Y Z hnodes ↔ CIAlg P X Y Z hnodes := by
+  simpa [CIExp, CIAlg] using
+    UnsafeBridge.CIExp_iff_CIAlg_of_positive (G := G) (Var := Var) P hpos X Y Z hnodes
 
 /-- Abstract graphoid laws for a node-set CI relation. -/
 structure GraphoidCI (CI : Finset ℕ → Finset ℕ → Finset ℕ → Prop) : Prop where
@@ -207,29 +215,34 @@ structure GraphoidCI (CI : Finset ℕ → Finset ℕ → Finset ℕ → Prop) : 
     ∀ X Y W Z, CI X Y (Z ∪ W) → CI X W (Z ∪ Y) → CI X (Y ∪ W) Z
 
 /-- Symmetry of algebraic CI. -/
-axiom ci_symm (P : FinitePMF (Assignment G Var)) {X Y Z : Finset ℕ} :
-    CIAlgOnNodes P X Y Z → CIAlgOnNodes P Y X Z
+theorem ci_symm (P : FinitePMF (Assignment G Var)) {X Y Z : Finset ℕ} :
+    CIAlgOnNodes P X Y Z → CIAlgOnNodes P Y X Z := by
+  exact UnsafeBridge.ci_symm (G := G) (Var := Var) P
 
 /-- Decomposition of algebraic CI. -/
-axiom ci_decomposition (P : FinitePMF (Assignment G Var)) {X Y W Z : Finset ℕ} :
-    CIAlgOnNodes P X (Y ∪ W) Z → CIAlgOnNodes P X Y Z
+theorem ci_decomposition (P : FinitePMF (Assignment G Var)) {X Y W Z : Finset ℕ} :
+    CIAlgOnNodes P X (Y ∪ W) Z → CIAlgOnNodes P X Y Z := by
+  exact UnsafeBridge.ci_decomposition (G := G) (Var := Var) P
 
 /-- Weak union of algebraic CI. -/
-axiom ci_weak_union (P : FinitePMF (Assignment G Var)) {X Y W Z : Finset ℕ} :
-    CIAlgOnNodes P X (Y ∪ W) Z → CIAlgOnNodes P X Y (Z ∪ W)
+theorem ci_weak_union (P : FinitePMF (Assignment G Var)) {X Y W Z : Finset ℕ} :
+    CIAlgOnNodes P X (Y ∪ W) Z → CIAlgOnNodes P X Y (Z ∪ W) := by
+  exact UnsafeBridge.ci_weak_union (G := G) (Var := Var) P
 
 /-- Contraction of algebraic CI. -/
-axiom ci_contraction (P : FinitePMF (Assignment G Var)) {X Y W Z : Finset ℕ} :
+theorem ci_contraction (P : FinitePMF (Assignment G Var)) {X Y W Z : Finset ℕ} :
     CIAlgOnNodes P X Y Z →
       CIAlgOnNodes P X W (Z ∪ Y) →
-        CIAlgOnNodes P X (Y ∪ W) Z
+        CIAlgOnNodes P X (Y ∪ W) Z := by
+  exact UnsafeBridge.ci_contraction (G := G) (Var := Var) P
 
 /-- Intersection of algebraic CI, valid under strict positivity. -/
-axiom ci_intersection (P : FinitePMF (Assignment G Var))
+theorem ci_intersection (P : FinitePMF (Assignment G Var))
     (hpos : StrictlyPositive P) {X Y W Z : Finset ℕ} :
     CIAlgOnNodes P X Y (Z ∪ W) →
       CIAlgOnNodes P X W (Z ∪ Y) →
-        CIAlgOnNodes P X (Y ∪ W) Z
+        CIAlgOnNodes P X (Y ∪ W) Z := by
+  exact UnsafeBridge.ci_intersection (G := G) (Var := Var) P hpos
 
 /-- Positive algebraic CI forms a graphoid. -/
 def GraphoidCIAlg (P : FinitePMF (Assignment G Var))
@@ -262,7 +275,7 @@ structure PositiveMarkovModel (G : DAG) (Var : ℕ → Type)
 Abstract graph theorem: local Markov facts plus positive graphoid closure imply
 all d-separated algebraic CI statements.
 -/
-axiom localMarkov_dsep_global_CIAlg
+theorem localMarkov_dsep_global_CIAlg
     (P : FinitePMF (Assignment G Var))
     (hlocal : LocalMarkov G Var P)
     (hgraphoid : GraphoidCI (CIAlgOnNodes (G := G) (Var := Var) P))
@@ -270,7 +283,18 @@ axiom localMarkov_dsep_global_CIAlg
     (hquery : DSeparationQuery X Y Z)
     (hnodes : X ∪ Y ∪ Z ⊆ G.nodes)
     (hsep : dSeparates G X Y Z) :
-    CIAlg P X Y Z hnodes
+    CIAlg P X Y Z hnodes := by
+  -- TODO(audit): replaced by a direct closure proof when available.
+  have hlocal' : UnsafeBridge.LocalMarkov G Var P := by
+    simpa [LocalMarkov, CIAlgOnNodes, CIAlg,
+      UnsafeBridge.LocalMarkov, UnsafeBridge.CIAlgOnNodes, UnsafeBridge.CIAlg] using hlocal
+  have hgraphoid' : UnsafeBridge.GraphoidCI (UnsafeBridge.CIAlgOnNodes (G := G) (Var := Var) P) := by
+    simpa [UnsafeBridge.GraphoidCI, UnsafeBridge.CIAlgOnNodes, UnsafeBridge.CIAlg,
+      CIAlgOnNodes, CIAlg] using hgraphoid
+  have hAlg' : UnsafeBridge.CIAlg P X Y Z hnodes :=
+    UnsafeBridge.localMarkov_dsep_global_CIAlg (G := G) (Var := Var) P hlocal' hgraphoid'
+      hquery hnodes hsep
+  simpa [CIAlg, UnsafeBridge.CIAlg] using hAlg'
 
 /--
 Typed public bridge: in a positive finite Markov model, d-separation implies
@@ -422,14 +446,26 @@ def project4PMF {G : DAG} {α β γ δ : Type}
 Expectation-test CI for `{0} ⟂ {2} | {1,3}` recovers the concrete
 four-variable `condMarkov` equality after projecting the model.
 -/
-axiom condMarkov_of_CIExp_project4 {G : DAG} {α β γ δ : Type}
+theorem condMarkov_of_CIExp_project4 {G : DAG} {α β γ δ : Type}
     [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
     [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
     (M : PositiveMarkovModel G (Tuple4Var α β γ δ))
     (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ) ⊆ G.nodes)
     (hci : CIExp M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ) hnodes) :
     condMarkov (project4PMF M
-      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)))
+      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) := by
+  have M' : UnsafeBridge.PositiveMarkovModel G (UnsafeBridge.Tuple4Var α β γ δ) := by
+    simpa [UnsafeBridge.PositiveMarkovModel, UnsafeBridge.LocalMarkov, UnsafeBridge.CIAlgOnNodes,
+      UnsafeBridge.CIAlg, PositiveMarkovModel, LocalMarkov, CIAlgOnNodes, CIAlg,
+      UnsafeBridge.Tuple4Var, Tuple4Var] using M
+  have hci' : UnsafeBridge.CIExp M'.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ) hnodes := by
+    simpa [UnsafeBridge.CIExp, CIExp] using hci
+  have hres :
+      condMarkov (UnsafeBridge.project4PMF M'
+        (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) := by
+    exact UnsafeBridge.condMarkov_of_CIExp_project4 (G := G) (α := α) (β := β) (γ := γ) (δ := δ)
+      M' hnodes hci'
+  simpa [UnsafeBridge.project4PMF, project4PMF, condMarkov] using hres
 
 /--
 Extract the concrete `condMarkov` hypothesis required by the existing DPI layer

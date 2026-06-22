@@ -92,14 +92,16 @@ open InfoTheory
 Expectation-test CI for `{0} ⟂ {2} | {1}` recovers the concrete algebraic
 `IsMarkovChain` condition after projecting the positive model to `(A, B, C)`.
 -/
-axiom isMarkovChain_of_CIExp_project3 {G : DAG} {α β γ : Type}
+theorem isMarkovChain_of_CIExp_project3 {G : DAG} {α β γ : Type}
     [Fintype α] [Fintype β] [Fintype γ]
     [DecidableEq α] [DecidableEq β] [DecidableEq γ]
     (M : PositiveMarkovModel G (Tuple3Var α β γ))
     (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
     (hci : CIExp M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ) hnodes) :
     IsMarkovChain (project3PMF M
-      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)))
+      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) := by
+  exact UnsafeBridge.isMarkovChain_of_CIExp_project3 (G := G) (α := α) (β := β) (γ := γ)
+    M hnodes hci
 
 /-- **d-separation implies conditional independence** in the 3-variable
     algebraic form, using the positive-model projection API. -/

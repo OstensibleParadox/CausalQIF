@@ -16,6 +16,8 @@ This map tracks the active dependency structure in the canonical `lean/CausalQIF
   - imports `CausalQIF.DSeparation.DAGParser`
   - imports `CausalQIF.DSeparation.MarkovGenerator`
   - imports `CausalQIF.DSeparation.DSepCMIBridge`
+  - imports `CausalQIF.Experimental.InfoTheoryBridge`
+  - imports `CausalQIF.Experimental.FiniteQueryAudit`
   - imports `CausalQIF.Examples.CaseStudy`
 
 ## Graph layer
@@ -51,8 +53,9 @@ This map tracks the active dependency structure in the canonical `lean/CausalQIF
 
 ## Boundaries / excluded modules
 
-- `Experimental/InfoTheoryBridge` is the explicit pending theorem that should not currently close
-  core assumptions.
+The imported `Experimental/InfoTheoryBridge` is the explicit pending finite-to-probabilistic bridge.
+It is included at root for compatibility and API continuity, but it does not currently close
+the generic global `d-sep ⇒ CI` theorem.
 - `Experimental/FiniteQueryAudit` is historical bridge logic retained for audit traceability only.
 - `Certificates/PredictabilityRouteImpossibility` is a legacy off-root compatibility
   module for the old predictability surrogate. It is not imported by `lean/CausalQIF.lean`
@@ -81,9 +84,12 @@ independent theorems in any contribution tally.
 
 ## Premise ledger (proved vs. assumed)
 
-The active build is `0 sorry / 0 axiom`. Where a result's force depends on an
+The active build is `0 sorry / 10 axiom`. Where a result's force depends on an
 externally-supplied hypothesis (not discharged in Lean), it is listed here. These are
-**reductions**, not closed obligations; paper statements must surface the premise.
+the explicit axioms in `DSeparation/MarkovGenerator` and `DSeparation/DSepCMIBridge`
+(context positivity, graphoid primitives, and projected conditional-Markov extraction), and are
+the explicit reductions carried forward into the premise ledger.
+They are **reductions**, not closed obligations; paper statements must surface the premise.
 
 | Result | Carried premise (the actual hard part) |
 | --- | --- |
@@ -91,7 +97,7 @@ externally-supplied hypothesis (not discharged in Lean), it is listed here. Thes
 | `Certificates/DualCertificate.{condMarkov_deterministicProbePMF, prop2_dynamic_lb_deterministic_probe}` | deterministic probe construction `probe : State → Trace → Probe`; no external `condMarkov` premise |
 | `Certificates/DualCertificate.prop1_static_ub` | `I_S_M_cond_Ttilde P ≤ C_cut Ω` (cut-set capacity bound) |
 | `Certificates/CutSetBoundExtract.{cut_set_dpi_bound, abstract_cut_set_bound}` | `condMarkov (pmf_from_vars …)` + capacity bound |
-| `DSeparation/DSepCMIBridge.cmi_zero_of_factorizes_dsep` | `FactorizesOverDAG` (3-variable algebraic Markov case only) |
+| `DSeparation/DSepCMIBridge.cmi_zero_of_positiveModel_dsep` | `PositiveMarkovModel` + `DSeparationQuery` + `dSeparates` for the 3-variable tuple projection; depends on the postulated CI-to-Markov axiom |
 | `Certificates/PACBounds.theorem3_pac_lower_bound` | `PACPaperStatisticalDerivation` fields: Gaussian KL/Fano bound + missed-cell bound, with formulas recorded in Lean and probability proofs supplied by `provenance/fano_bound.md` |
 | `Certificates/EntropicEIS.no_entropic_eis_autoregressive` | deterministic screenability `S = recon(T)`; the finite-Shannon residual-autonomy contradiction is exact |
 | `Certificates/PredictabilityRouteImpossibility.internal_route_impossibility_predictability` | legacy off-root `IsPredictable` surrogate + non-σ-additive `ProbSpace`, not `H(I\|T)>0` |
@@ -99,7 +105,6 @@ externally-supplied hypothesis (not discharged in Lean), it is listed here. Thes
 Scope notes:
 - d-separation: soundness proven only under pairwise-disjoint `X/Y/Z`; the unrestricted
   biconditional is proven **false** (`dsep_complete_endpoint_in_Z_counterexample`). General
-  probabilistic `d-sep ⇒ CI` is the deferred `Experimental/InfoTheoryBridge` `sorry`
-  (excluded from the active build).
+  probabilistic `d-sep ⇒ CI` is deferred to `Experimental/InfoTheoryBridge` (imported for compatibility; theorem is not closed by the current core assumptions).
 - `Certificates/ChannelCapacity` is a **KKT upper-bound certificate checker**
   (`capacity_le_of_kkt`), not a channel capacity (no sup over input distributions).
