@@ -17,6 +17,66 @@ def condEntropy (P_XY : FinitePMF (α × β)) : ℝ :=
   entropyOf (fun xy : α × β => P_XY.pmf xy) -
     entropyOf (marginalPairSnd P_XY)
 
+/--
+A pair distribution is functionally determined when the first coordinate is
+almost surely a function of the second coordinate.
+-/
+def FunctionallyDetermined (P : FinitePMF (α × β)) (recon : β → α) : Prop :=
+  ∀ x y, x ≠ recon y → P.pmf (x, y) = 0
+
+lemma marginalPairSnd_eq_pmf_recon_of_functionallyDetermined
+    (P : FinitePMF (α × β)) {recon : β → α}
+    (hdet : FunctionallyDetermined P recon) (y : β) :
+    marginalPairSnd P y = P.pmf (recon y, y) := by
+  unfold marginalPairSnd
+  refine Finset.sum_eq_single (recon y) ?_ ?_
+  · intro x _ hx
+    exact hdet x y hx
+  · intro hnot
+    exact False.elim (hnot (Finset.mem_univ _))
+
+lemma entropy_fiber_eq_of_functionallyDetermined
+    (P : FinitePMF (α × β)) {recon : β → α}
+    (hdet : FunctionallyDetermined P recon) (y : β) :
+    (∑ x : α, negMulLog2 (P.pmf (x, y))) =
+      negMulLog2 (marginalPairSnd P y) := by
+  have hsum :
+      (∑ x : α, negMulLog2 (P.pmf (x, y))) =
+        negMulLog2 (P.pmf (recon y, y)) := by
+    refine Finset.sum_eq_single (recon y) ?_ ?_
+    · intro x _ hx
+      rw [hdet x y hx]
+      unfold negMulLog2
+      ring
+    · intro hnot
+      exact False.elim (hnot (Finset.mem_univ _))
+  rw [hsum, marginalPairSnd_eq_pmf_recon_of_functionallyDetermined P hdet y]
+
+lemma entropyOf_pair_eq_entropyOf_snd_of_functionallyDetermined
+    (P : FinitePMF (α × β)) {recon : β → α}
+    (hdet : FunctionallyDetermined P recon) :
+    entropyOf (fun xy : α × β => P.pmf xy) =
+      entropyOf (marginalPairSnd P) := by
+  unfold entropyOf
+  calc
+    ∑ xy : α × β, negMulLog2 (P.pmf xy)
+        = ∑ x : α, ∑ y : β, negMulLog2 (P.pmf (x, y)) := by
+          rw [Fintype.sum_prod_type]
+    _ = ∑ y : β, ∑ x : α, negMulLog2 (P.pmf (x, y)) := by
+          rw [Finset.sum_comm]
+    _ = ∑ y : β, negMulLog2 (marginalPairSnd P y) := by
+          apply Finset.sum_congr rfl
+          intro y _
+          exact entropy_fiber_eq_of_functionallyDetermined P hdet y
+
+lemma condEntropy_eq_zero_of_functionallyDetermined
+    (P : FinitePMF (α × β)) {recon : β → α}
+    (hdet : FunctionallyDetermined P recon) :
+    condEntropy P = 0 := by
+  unfold condEntropy
+  rw [entropyOf_pair_eq_entropyOf_snd_of_functionallyDetermined P hdet]
+  ring
+
 /-- Mutual information I(X;Y) for a 2-variable PMF. -/
 def mutualInfo (P : FinitePMF (α × β)) : ℝ :=
   entropyOf (marginalPairFst P) + entropyOf (marginalPairSnd P) - entropyOf P.pmf

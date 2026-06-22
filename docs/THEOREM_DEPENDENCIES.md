@@ -10,6 +10,7 @@ This map tracks the active dependency structure in the canonical `lean/CausalQIF
   - imports `CausalQIF.InfoTheory` (grouped)
   - imports `CausalQIF.Certificates.CutSetBoundExtract`
   - imports `CausalQIF.Certificates.TraceRecoverability` / `TraceRecoverabilityBridge`
+  - imports `CausalQIF.Certificates.EntropicEIS`
   - imports `CausalQIF.Certificates.DualCertificate`
   - imports `CausalQIF.Certificates` family modules
   - imports `CausalQIF.DSeparation.DAGParser`
@@ -53,6 +54,9 @@ This map tracks the active dependency structure in the canonical `lean/CausalQIF
 - `Experimental/InfoTheoryBridge` is the explicit pending theorem that should not currently close
   core assumptions.
 - `Experimental/FiniteQueryAudit` is historical bridge logic retained for audit traceability only.
+- `Certificates/PredictabilityRouteImpossibility` is a legacy off-root compatibility
+  module for the old predictability surrogate. It is not imported by `lean/CausalQIF.lean`
+  and is not the paper-facing EIS theorem.
 - Legacy archive roots are not part of active builds.
 
 ## Canonical check
@@ -89,7 +93,8 @@ externally-supplied hypothesis (not discharged in Lean), it is listed here. Thes
 | `Certificates/CutSetBoundExtract.{cut_set_dpi_bound, abstract_cut_set_bound}` | `condMarkov (pmf_from_vars …)` + capacity bound |
 | `DSeparation/DSepCMIBridge.cmi_zero_of_factorizes_dsep` | `FactorizesOverDAG` (3-variable algebraic Markov case only) |
 | `Certificates/PACBounds.theorem3_pac_lower_bound` | `PACPaperStatisticalDerivation` fields: Gaussian KL/Fano bound + missed-cell bound, with formulas recorded in Lean and probability proofs supplied by `provenance/fano_bound.md` |
-| `Certificates/InternalImpossibility.internal_impossibility_predictability` | runs on the `IsPredictable` surrogate + non-σ-additive `ProbSpace`, not `H(I\|T)>0` |
+| `Certificates/EntropicEIS.no_entropic_eis_autoregressive` | deterministic screenability `S = recon(T)`; the finite-Shannon residual-autonomy contradiction is exact |
+| `Certificates/PredictabilityRouteImpossibility.internal_route_impossibility_predictability` | legacy off-root `IsPredictable` surrogate + non-σ-additive `ProbSpace`, not `H(I\|T)>0` |
 
 Scope notes:
 - d-separation: soundness proven only under pairwise-disjoint `X/Y/Z`; the unrestricted

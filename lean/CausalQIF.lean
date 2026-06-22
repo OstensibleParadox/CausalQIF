@@ -14,7 +14,7 @@ import CausalQIF.Certificates.GeometricTools
 import CausalQIF.Certificates.CoveringBound
 import CausalQIF.Certificates.PACBounds
 import CausalQIF.Certificates.FiniteQueryDecisionImpossibility
-import CausalQIF.Certificates.PredictabilityRouteImpossibility
+import CausalQIF.Certificates.EntropicEIS
 import CausalQIF.Certificates.SeparatedPackingImpossibility
 import CausalQIF.Certificates.SemanticClosureIff
 import CausalQIF.DSeparation.DAGParser

@@ -12,7 +12,9 @@ the audit trace T_t, no admissible projection χ(S_t) retains residual
 autonomy.
 
 This corresponds to Corollary 2 of the paper. The ε > 0 (wrapper) case
-is handled in `InternalImpossibility.lean` using predictability.
+is now represented by the finite-Shannon theorem in `EntropicEIS.lean`.
+The old predictability surrogate is retained only in
+`PredictabilityRouteImpossibility.lean` as an off-root compatibility module.
 
 The formalization deliberately stops at exact same-trace surrogates rather
 than building the full entropy / conditional-mutual-information machinery.
