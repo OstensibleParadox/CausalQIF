@@ -67,7 +67,7 @@ CausalQIF/
 ## Current bridge posture
 
 - `DSeparation/UnsafeBridge.lean` is the single repository location still
-  carrying explicit bridge axioms for this proof frontier (`9` axioms total).
+  carrying explicit bridge axioms for this proof frontier (`5` axioms total).
 - `DSeparation/GlobalMarkov.lean` is the explicit intermediate step for the local
   Markov + graphoid → global d-separation bridge.
 - `DSeparation/MarkovGenerator.lean` and `DSeparation/DSepCMIBridge.lean`
