@@ -309,6 +309,544 @@ def project3PMF {G : DAG} {α β γ : Type}
     FinitePMF (α × β × γ) :=
   FinitePMF.map M.P fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)
 
+private def tuple3Z {α β γ : Type} (b : β) :
+    AssignOn (Tuple3Var α β γ) ({1} : Finset ℕ) :=
+  fun i => by
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simp at hn
+      | succ n =>
+        cases n with
+        | zero =>
+          exact b
+        | succ _ =>
+          simp at hn
+
+private def tuple3XYZ {α β γ : Type} (a : α) (b : β) (c : γ) :
+    AssignOn (Tuple3Var α β γ) (({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ)) :=
+  fun i => by
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        exact a
+      | succ n =>
+        cases n with
+        | zero =>
+          exact b
+        | succ n =>
+          cases n with
+          | zero =>
+            exact c
+          | succ _ =>
+            simp at hn
+
+private def tuple3XZ {α β γ : Type} (a : α) (b : β) :
+    AssignOn (Tuple3Var α β γ) (({0} : Finset ℕ) ∪ ({1} : Finset ℕ)) :=
+  fun i => by
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        exact a
+      | succ n =>
+        cases n with
+        | zero =>
+          exact b
+        | succ _ =>
+          simp at hn
+
+private def tuple3YZ {α β γ : Type} (b : β) (c : γ) :
+    AssignOn (Tuple3Var α β γ) (({2} : Finset ℕ) ∪ ({1} : Finset ℕ)) :=
+  fun i => by
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simp at hn
+      | succ n =>
+        cases n with
+        | zero =>
+          exact b
+        | succ n =>
+          cases n with
+          | zero =>
+            exact c
+          | succ _ =>
+            simp at hn
+
+private theorem restrict_eq_tuple3XYZ_iff {G : DAG} {α β γ : Type}
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes) (h2 : 2 ∈ G.nodes)
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
+    (x : Assignment G (Tuple3Var α β γ)) (a : α) (b : β) (c : γ) :
+    restrictAssignment hnodes x = tuple3XYZ a b c ↔
+      x ⟨0, h0⟩ = a ∧ x ⟨1, h1⟩ = b ∧ x ⟨2, h2⟩ = c := by
+  constructor
+  · intro h
+    constructor
+    · have := congrFun h ⟨0, by simp⟩
+      simpa [restrictAssignment, restrictAssign, tuple3XYZ, Tuple3Var] using this
+    · constructor
+      · have := congrFun h ⟨1, by simp⟩
+        simpa [restrictAssignment, restrictAssign, tuple3XYZ, Tuple3Var] using this
+      · have := congrFun h ⟨2, by simp⟩
+        simpa [restrictAssignment, restrictAssign, tuple3XYZ, Tuple3Var] using this
+  · rintro ⟨hA, hB, hC⟩
+    ext i
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simpa [restrictAssignment, restrictAssign, tuple3XYZ, Tuple3Var] using hA
+      | succ n =>
+        cases n with
+        | zero =>
+          simpa [restrictAssignment, restrictAssign, tuple3XYZ, Tuple3Var] using hB
+        | succ n =>
+          cases n with
+          | zero =>
+            simpa [restrictAssignment, restrictAssign, tuple3XYZ, Tuple3Var] using hC
+          | succ _ =>
+            simp at hn
+
+private theorem restrict_eq_tuple3Z_iff {G : DAG} {α β γ : Type}
+    (h1 : 1 ∈ G.nodes)
+    (hZ : ({1} : Finset ℕ) ⊆ G.nodes)
+    (x : Assignment G (Tuple3Var α β γ)) (b : β) :
+    restrictAssignment hZ x = tuple3Z b ↔ x ⟨1, h1⟩ = b := by
+  constructor
+  · intro h
+    have := congrFun h ⟨1, by simp⟩
+    simpa [restrictAssignment, restrictAssign, tuple3Z, Tuple3Var] using this
+  · intro hB
+    ext i
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simp at hn
+      | succ n =>
+        cases n with
+        | zero =>
+          simpa [restrictAssignment, restrictAssign, tuple3Z, Tuple3Var] using hB
+        | succ _ =>
+          simp at hn
+
+private theorem restrict_eq_tuple3XZ_iff {G : DAG} {α β γ : Type}
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes)
+    (hXZ : ({0} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
+    (x : Assignment G (Tuple3Var α β γ)) (a : α) (b : β) :
+    restrictAssignment hXZ x = tuple3XZ a b ↔
+      x ⟨0, h0⟩ = a ∧ x ⟨1, h1⟩ = b := by
+  constructor
+  · intro h
+    constructor
+    · have := congrFun h ⟨0, by simp⟩
+      simpa [restrictAssignment, restrictAssign, tuple3XZ, Tuple3Var] using this
+    · have := congrFun h ⟨1, by simp⟩
+      simpa [restrictAssignment, restrictAssign, tuple3XZ, Tuple3Var] using this
+  · rintro ⟨hA, hB⟩
+    ext i
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simpa [restrictAssignment, restrictAssign, tuple3XZ, Tuple3Var] using hA
+      | succ n =>
+        cases n with
+        | zero =>
+          simpa [restrictAssignment, restrictAssign, tuple3XZ, Tuple3Var] using hB
+        | succ _ =>
+          simp at hn
+
+private theorem restrict_eq_tuple3YZ_iff {G : DAG} {α β γ : Type}
+    (h1 : 1 ∈ G.nodes) (h2 : 2 ∈ G.nodes)
+    (hYZ : ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
+    (x : Assignment G (Tuple3Var α β γ)) (b : β) (c : γ) :
+    restrictAssignment hYZ x = tuple3YZ b c ↔
+      x ⟨1, h1⟩ = b ∧ x ⟨2, h2⟩ = c := by
+  constructor
+  · intro h
+    constructor
+    · have := congrFun h ⟨1, by simp⟩
+      simpa [restrictAssignment, restrictAssign, tuple3YZ, Tuple3Var] using this
+    · have := congrFun h ⟨2, by simp⟩
+      simpa [restrictAssignment, restrictAssign, tuple3YZ, Tuple3Var] using this
+  · rintro ⟨hB, hC⟩
+    ext i
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simp at hn
+      | succ n =>
+        cases n with
+        | zero =>
+          simpa [restrictAssignment, restrictAssign, tuple3YZ, Tuple3Var] using hB
+        | succ n =>
+          cases n with
+          | zero =>
+            simpa [restrictAssignment, restrictAssign, tuple3YZ, Tuple3Var] using hC
+          | succ _ =>
+            simp at hn
+
+private theorem tuple3XYZ_restrict_Z {α β γ : Type} (a : α) (b : β) (c : γ) :
+    restrictAssign
+        (subset_Z_of_XYZ ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ))
+        (tuple3XYZ a b c) =
+      tuple3Z b := by
+  ext i
+  cases i with
+  | mk n hn =>
+    cases n with
+    | zero =>
+      simp at hn
+    | succ n =>
+      cases n with
+      | zero =>
+        rfl
+      | succ _ =>
+        simp at hn
+
+private theorem tuple3XYZ_restrict_XZ {α β γ : Type} (a : α) (b : β) (c : γ) :
+    restrictAssign
+        (subset_XZ_of_XYZ ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ))
+        (tuple3XYZ a b c) =
+      tuple3XZ a b := by
+  ext i
+  cases i with
+  | mk n hn =>
+    cases n with
+    | zero =>
+      rfl
+    | succ n =>
+      cases n with
+      | zero =>
+        rfl
+      | succ _ =>
+        simp at hn
+
+private theorem tuple3XYZ_restrict_YZ {α β γ : Type} (a : α) (b : β) (c : γ) :
+    restrictAssign
+        (subset_YZ_of_XYZ ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ))
+        (tuple3XYZ a b c) =
+      tuple3YZ b c := by
+  ext i
+  cases i with
+  | mk n hn =>
+    cases n with
+    | zero =>
+      simp at hn
+    | succ n =>
+      cases n with
+      | zero =>
+        rfl
+      | succ n =>
+        cases n with
+        | zero =>
+          rfl
+        | succ _ =>
+          simp at hn
+
+private theorem project3_pmf_eq_marginalXYZ {G : DAG} {α β γ : Type}
+    [Fintype α] [Fintype β] [Fintype γ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ]
+    (M : PositiveMarkovModel G (Tuple3Var α β γ))
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes) (h2 : 2 ∈ G.nodes)
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
+    (a : α) (b : β) (c : γ) :
+    (project3PMF M h0 h1 h2).pmf (a, b, c) =
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ))
+        hnodes (tuple3XYZ a b c) := by
+  unfold project3PMF FinitePMF.map marginalMass
+  apply Finset.sum_congr rfl
+  intro x hx
+  by_cases h : x ⟨0, h0⟩ = a ∧ x ⟨1, h1⟩ = b ∧ x ⟨2, h2⟩ = c
+  · have hr : restrictAssignment hnodes x = tuple3XYZ a b c :=
+      (restrict_eq_tuple3XYZ_iff h0 h1 h2 hnodes x a b c).2 h
+    have ht : (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c) := by
+      rcases h with ⟨hA, hB, hC⟩
+      change (x ⟨0, h0⟩, x ⟨1, h1⟩, x ⟨2, h2⟩) = (a, b, c)
+      rw [hA, hB, hC]
+      rfl
+    calc
+      (if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c) then
+          M.P.pmf x else 0) = M.P.pmf x := if_pos ht
+      _ = (if restrictAssignment hnodes x = tuple3XYZ a b c then M.P.pmf x else 0) :=
+          (if_pos hr).symm
+  · have hr : restrictAssignment hnodes x ≠ tuple3XYZ a b c := by
+      intro hr
+      exact h ((restrict_eq_tuple3XYZ_iff h0 h1 h2 hnodes x a b c).1 hr)
+    have ht : ¬ (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c) := by
+      intro ht
+      apply h
+      constructor
+      · exact congrArg Prod.fst ht
+      · constructor
+        · exact congrArg Prod.fst (congrArg Prod.snd ht)
+        · exact congrArg Prod.snd (congrArg Prod.snd ht)
+    calc
+      (if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c) then
+          M.P.pmf x else 0) = 0 := if_neg ht
+      _ = (if restrictAssignment hnodes x = tuple3XYZ a b c then M.P.pmf x else 0) :=
+          (if_neg hr).symm
+
+private theorem project3_context_b_eq_marginalZ {G : DAG} {α β γ : Type}
+    [Fintype α] [Fintype β] [Fintype γ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ]
+    (M : PositiveMarkovModel G (Tuple3Var α β γ))
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes) (h2 : 2 ∈ G.nodes)
+    (hZ : ({1} : Finset ℕ) ⊆ G.nodes)
+    (b : β) :
+    (∑ a' : α, ∑ c' : γ, (project3PMF M h0 h1 h2).pmf (a', b, c')) =
+      marginalMass M.P ({1} : Finset ℕ) hZ (tuple3Z b) := by
+  unfold project3PMF FinitePMF.map marginalMass
+  calc
+    (∑ a' : α, ∑ c' : γ,
+        ∑ x : Assignment G (Tuple3Var α β γ),
+          if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c') then
+            M.P.pmf x
+          else 0)
+        = ∑ a' : α, ∑ x : Assignment G (Tuple3Var α β γ), ∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c') then
+                M.P.pmf x
+              else 0 := by
+      apply Finset.sum_congr rfl
+      intro a' ha'
+      rw [Finset.sum_comm]
+    _ = ∑ x : Assignment G (Tuple3Var α β γ),
+            ∑ a' : α, ∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c') then
+                M.P.pmf x
+              else 0 := by
+      rw [Finset.sum_comm]
+    _ = ∑ x : Assignment G (Tuple3Var α β γ),
+          if restrictAssignment hZ x = tuple3Z b then M.P.pmf x else 0 := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      by_cases hb : x ⟨1, h1⟩ = b
+      · have hr : restrictAssignment hZ x = tuple3Z b :=
+          (restrict_eq_tuple3Z_iff h1 hZ x b).2 hb
+        have hinner :
+            (∑ a' : α, ∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c') then
+                M.P.pmf x
+              else 0) = M.P.pmf x := by
+          calc
+            (∑ a' : α, ∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c') then
+                M.P.pmf x
+              else 0)
+                = ∑ q : α × γ,
+                    if (x ⟨0, h0⟩, x ⟨2, h2⟩) = q then M.P.pmf x else 0 := by
+              rw [← Finset.sum_product' (s := (Finset.univ : Finset α))
+                (t := (Finset.univ : Finset γ))]
+              simp [hb, Prod.ext_iff]
+            _ = M.P.pmf x := by
+              exact
+                (Fintype.sum_ite_eq
+                  (i := (x ⟨0, h0⟩, x ⟨2, h2⟩))
+                  (f := fun _ : α × γ => M.P.pmf x))
+        calc
+          (∑ a' : α, ∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c') then
+                M.P.pmf x
+              else 0) = M.P.pmf x := hinner
+          _ = (if restrictAssignment hZ x = tuple3Z b then M.P.pmf x else 0) :=
+            (if_pos hr).symm
+      · have hr : restrictAssignment hZ x ≠ tuple3Z b := by
+          intro hr
+          exact hb ((restrict_eq_tuple3Z_iff h1 hZ x b).1 hr)
+        have hinner :
+            (∑ a' : α, ∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c') then
+                M.P.pmf x
+              else 0) = 0 := by
+          simp [Prod.ext_iff, hb]
+        calc
+          (∑ a' : α, ∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c') then
+                M.P.pmf x
+              else 0) = 0 := hinner
+          _ = (if restrictAssignment hZ x = tuple3Z b then M.P.pmf x else 0) :=
+            (if_neg hr).symm
+
+private theorem project3_sum_c_eq_marginalXZ {G : DAG} {α β γ : Type}
+    [Fintype α] [Fintype β] [Fintype γ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ]
+    (M : PositiveMarkovModel G (Tuple3Var α β γ))
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes) (h2 : 2 ∈ G.nodes)
+    (hXZ : ({0} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
+    (a : α) (b : β) :
+    (∑ c' : γ, (project3PMF M h0 h1 h2).pmf (a, b, c')) =
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({1} : Finset ℕ)) hXZ (tuple3XZ a b) := by
+  unfold project3PMF FinitePMF.map marginalMass
+  calc
+    (∑ c' : γ, ∑ x : Assignment G (Tuple3Var α β γ),
+        if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c') then
+          M.P.pmf x
+        else 0)
+        = ∑ x : Assignment G (Tuple3Var α β γ), ∑ c' : γ,
+            if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c') then
+              M.P.pmf x
+            else 0 := by
+      rw [Finset.sum_comm]
+    _ = ∑ x : Assignment G (Tuple3Var α β γ),
+          if restrictAssignment hXZ x = tuple3XZ a b then M.P.pmf x else 0 := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      by_cases hab : x ⟨0, h0⟩ = a ∧ x ⟨1, h1⟩ = b
+      · have hr : restrictAssignment hXZ x = tuple3XZ a b :=
+          (restrict_eq_tuple3XZ_iff h0 h1 hXZ x a b).2 hab
+        have hinner :
+            (∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c') then
+                M.P.pmf x
+              else 0) = M.P.pmf x := by
+          rcases hab with ⟨hA, hB⟩
+          calc
+            (∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c') then
+                M.P.pmf x
+              else 0)
+                = ∑ c' : γ, if x ⟨2, h2⟩ = c' then M.P.pmf x else 0 := by
+              apply Finset.sum_congr rfl
+              intro c' hc'
+              by_cases hC : x ⟨2, h2⟩ = c'
+              · have ht : (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c') := by
+                  change (x ⟨0, h0⟩, x ⟨1, h1⟩, x ⟨2, h2⟩) = (a, b, c')
+                  rw [hA, hB, hC]
+                  rfl
+                rw [if_pos ht, if_pos hC]
+              · have ht : ¬ (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c') := by
+                  intro ht
+                  exact hC (congrArg Prod.snd (congrArg Prod.snd ht))
+                rw [if_neg ht, if_neg hC]
+            _ = M.P.pmf x := by
+              exact
+                (Fintype.sum_ite_eq
+                  (i := x ⟨2, h2⟩)
+                  (f := fun _ : γ => M.P.pmf x))
+        calc
+          (∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c') then
+                M.P.pmf x
+              else 0) = M.P.pmf x := hinner
+          _ = (if restrictAssignment hXZ x = tuple3XZ a b then M.P.pmf x else 0) :=
+            (if_pos hr).symm
+      · have hr : restrictAssignment hXZ x ≠ tuple3XZ a b := by
+          intro hr
+          exact hab ((restrict_eq_tuple3XZ_iff h0 h1 hXZ x a b).1 hr)
+        have hinner :
+            (∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c') then
+                M.P.pmf x
+              else 0) = 0 := by
+          apply Finset.sum_eq_zero
+          intro c' hc'
+          rw [if_neg]
+          intro ht
+          apply hab
+          constructor
+          · exact congrArg Prod.fst ht
+          · exact congrArg Prod.fst (congrArg Prod.snd ht)
+        calc
+          (∑ c' : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a, b, c') then
+                M.P.pmf x
+              else 0) = 0 := hinner
+          _ = (if restrictAssignment hXZ x = tuple3XZ a b then M.P.pmf x else 0) :=
+            (if_neg hr).symm
+
+private theorem project3_sum_a_eq_marginalYZ {G : DAG} {α β γ : Type}
+    [Fintype α] [Fintype β] [Fintype γ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ]
+    (M : PositiveMarkovModel G (Tuple3Var α β γ))
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes) (h2 : 2 ∈ G.nodes)
+    (hYZ : ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
+    (b : β) (c : γ) :
+    (∑ a' : α, (project3PMF M h0 h1 h2).pmf (a', b, c)) =
+      marginalMass M.P (({2} : Finset ℕ) ∪ ({1} : Finset ℕ)) hYZ (tuple3YZ b c) := by
+  unfold project3PMF FinitePMF.map marginalMass
+  calc
+    (∑ a' : α, ∑ x : Assignment G (Tuple3Var α β γ),
+        if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c) then
+          M.P.pmf x
+        else 0)
+        = ∑ x : Assignment G (Tuple3Var α β γ), ∑ a' : α,
+            if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c) then
+              M.P.pmf x
+            else 0 := by
+      rw [Finset.sum_comm]
+    _ = ∑ x : Assignment G (Tuple3Var α β γ),
+          if restrictAssignment hYZ x = tuple3YZ b c then M.P.pmf x else 0 := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      by_cases hbc : x ⟨1, h1⟩ = b ∧ x ⟨2, h2⟩ = c
+      · have hr : restrictAssignment hYZ x = tuple3YZ b c :=
+          (restrict_eq_tuple3YZ_iff h1 h2 hYZ x b c).2 hbc
+        have hinner :
+            (∑ a' : α,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c) then
+                M.P.pmf x
+              else 0) = M.P.pmf x := by
+          rcases hbc with ⟨hB, hC⟩
+          calc
+            (∑ a' : α,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c) then
+                M.P.pmf x
+              else 0)
+                = ∑ a' : α, if x ⟨0, h0⟩ = a' then M.P.pmf x else 0 := by
+              apply Finset.sum_congr rfl
+              intro a' ha'
+              by_cases hA : x ⟨0, h0⟩ = a'
+              · have ht : (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c) := by
+                  change (x ⟨0, h0⟩, x ⟨1, h1⟩, x ⟨2, h2⟩) = (a', b, c)
+                  rw [hA, hB, hC]
+                  rfl
+                rw [if_pos ht, if_pos hA]
+              · have ht : ¬ (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c) := by
+                  intro ht
+                  exact hA (congrArg Prod.fst ht)
+                rw [if_neg ht, if_neg hA]
+            _ = M.P.pmf x := by
+              exact
+                (Fintype.sum_ite_eq
+                  (i := x ⟨0, h0⟩)
+                  (f := fun _ : α => M.P.pmf x))
+        calc
+          (∑ a' : α,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c) then
+                M.P.pmf x
+              else 0) = M.P.pmf x := hinner
+          _ = (if restrictAssignment hYZ x = tuple3YZ b c then M.P.pmf x else 0) :=
+            (if_pos hr).symm
+      · have hr : restrictAssignment hYZ x ≠ tuple3YZ b c := by
+          intro hr
+          exact hbc ((restrict_eq_tuple3YZ_iff h1 h2 hYZ x b c).1 hr)
+        have hinner :
+            (∑ a' : α,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c) then
+                M.P.pmf x
+              else 0) = 0 := by
+          apply Finset.sum_eq_zero
+          intro a' ha'
+          rw [if_neg]
+          intro ht
+          apply hbc
+          constructor
+          · exact congrArg Prod.fst (congrArg Prod.snd ht)
+          · exact congrArg Prod.snd (congrArg Prod.snd ht)
+        calc
+          (∑ a' : α,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩)) x = (a', b, c) then
+                M.P.pmf x
+              else 0) = 0 := hinner
+          _ = (if restrictAssignment hYZ x = tuple3YZ b c then M.P.pmf x else 0) :=
+            (if_neg hr).symm
+
 /-- Unsafe marker Markov-chain formula for three variables. -/
 abbrev UnsafeIsMarkovChain {α β γ : Type}
     [Fintype α] [Fintype β] [Fintype γ]
@@ -387,6 +925,633 @@ def project4PMF {G : DAG} {α β γ δ : Type}
     (h2 : 2 ∈ G.nodes) (h3 : 3 ∈ G.nodes) :
     FinitePMF (α × β × γ × δ) :=
   FinitePMF.map M.P fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)
+
+private def tuple4Z {α β γ δ : Type} (b : β) (d : δ) :
+    AssignOn (Tuple4Var α β γ δ) ({1, 3} : Finset ℕ) :=
+  fun i => by
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simp at hn
+      | succ n =>
+        cases n with
+        | zero =>
+          exact b
+        | succ n =>
+          cases n with
+          | zero =>
+            simp at hn
+          | succ n =>
+            cases n with
+            | zero =>
+              exact d
+            | succ _ =>
+              simp at hn
+
+private def tuple4XYZ {α β γ δ : Type} (a : α) (b : β) (c : γ) (d : δ) :
+    AssignOn (Tuple4Var α β γ δ)
+      (({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ)) :=
+  fun i => by
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        exact a
+      | succ n =>
+        cases n with
+        | zero =>
+          exact b
+        | succ n =>
+          cases n with
+          | zero =>
+            exact c
+          | succ n =>
+            cases n with
+            | zero =>
+              exact d
+            | succ _ =>
+              simp at hn
+
+private def tuple4XZ {α β γ δ : Type} (a : α) (b : β) (d : δ) :
+    AssignOn (Tuple4Var α β γ δ) (({0} : Finset ℕ) ∪ ({1, 3} : Finset ℕ)) :=
+  fun i => by
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        exact a
+      | succ n =>
+        cases n with
+        | zero =>
+          exact b
+        | succ n =>
+          cases n with
+          | zero =>
+            simp at hn
+          | succ n =>
+            cases n with
+            | zero =>
+              exact d
+            | succ _ =>
+              simp at hn
+
+private def tuple4YZ {α β γ δ : Type} (b : β) (c : γ) (d : δ) :
+    AssignOn (Tuple4Var α β γ δ) (({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ)) :=
+  fun i => by
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simp at hn
+      | succ n =>
+        cases n with
+        | zero =>
+          exact b
+        | succ n =>
+          cases n with
+          | zero =>
+            exact c
+          | succ n =>
+            cases n with
+            | zero =>
+              exact d
+            | succ _ =>
+              simp at hn
+
+private theorem restrict_eq_tuple4XYZ_iff {G : DAG} {α β γ δ : Type}
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes)
+    (h2 : 2 ∈ G.nodes) (h3 : 3 ∈ G.nodes)
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ) ⊆ G.nodes)
+    (x : Assignment G (Tuple4Var α β γ δ)) (a : α) (b : β) (c : γ) (d : δ) :
+    restrictAssignment hnodes x = tuple4XYZ a b c d ↔
+      x ⟨0, h0⟩ = a ∧ x ⟨1, h1⟩ = b ∧ x ⟨2, h2⟩ = c ∧ x ⟨3, h3⟩ = d := by
+  constructor
+  · intro h
+    constructor
+    · have := congrFun h ⟨0, by simp⟩
+      simpa [restrictAssignment, restrictAssign, tuple4XYZ, Tuple4Var] using this
+    · constructor
+      · have := congrFun h ⟨1, by simp⟩
+        simpa [restrictAssignment, restrictAssign, tuple4XYZ, Tuple4Var] using this
+      · constructor
+        · have := congrFun h ⟨2, by simp⟩
+          simpa [restrictAssignment, restrictAssign, tuple4XYZ, Tuple4Var] using this
+        · have := congrFun h ⟨3, by simp⟩
+          simpa [restrictAssignment, restrictAssign, tuple4XYZ, Tuple4Var] using this
+  · rintro ⟨hA, hB, hC, hD⟩
+    ext i
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simpa [restrictAssignment, restrictAssign, tuple4XYZ, Tuple4Var] using hA
+      | succ n =>
+        cases n with
+        | zero =>
+          simpa [restrictAssignment, restrictAssign, tuple4XYZ, Tuple4Var] using hB
+        | succ n =>
+          cases n with
+          | zero =>
+            simpa [restrictAssignment, restrictAssign, tuple4XYZ, Tuple4Var] using hC
+          | succ n =>
+            cases n with
+            | zero =>
+              simpa [restrictAssignment, restrictAssign, tuple4XYZ, Tuple4Var] using hD
+            | succ _ =>
+              simp at hn
+
+private theorem restrict_eq_tuple4Z_iff {G : DAG} {α β γ δ : Type}
+    (h1 : 1 ∈ G.nodes) (h3 : 3 ∈ G.nodes)
+    (hZ : ({1, 3} : Finset ℕ) ⊆ G.nodes)
+    (x : Assignment G (Tuple4Var α β γ δ)) (b : β) (d : δ) :
+    restrictAssignment hZ x = tuple4Z b d ↔
+      x ⟨1, h1⟩ = b ∧ x ⟨3, h3⟩ = d := by
+  constructor
+  · intro h
+    constructor
+    · have := congrFun h ⟨1, by simp⟩
+      simpa [restrictAssignment, restrictAssign, tuple4Z, Tuple4Var] using this
+    · have := congrFun h ⟨3, by simp⟩
+      simpa [restrictAssignment, restrictAssign, tuple4Z, Tuple4Var] using this
+  · rintro ⟨hB, hD⟩
+    ext i
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simp at hn
+      | succ n =>
+        cases n with
+        | zero =>
+          simpa [restrictAssignment, restrictAssign, tuple4Z, Tuple4Var] using hB
+        | succ n =>
+          cases n with
+          | zero =>
+            simp at hn
+          | succ n =>
+            cases n with
+            | zero =>
+              simpa [restrictAssignment, restrictAssign, tuple4Z, Tuple4Var] using hD
+            | succ _ =>
+              simp at hn
+
+private theorem restrict_eq_tuple4XZ_iff {G : DAG} {α β γ δ : Type}
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes) (h3 : 3 ∈ G.nodes)
+    (hXZ : ({0} : Finset ℕ) ∪ ({1, 3} : Finset ℕ) ⊆ G.nodes)
+    (x : Assignment G (Tuple4Var α β γ δ)) (a : α) (b : β) (d : δ) :
+    restrictAssignment hXZ x = tuple4XZ a b d ↔
+      x ⟨0, h0⟩ = a ∧ x ⟨1, h1⟩ = b ∧ x ⟨3, h3⟩ = d := by
+  constructor
+  · intro h
+    constructor
+    · have := congrFun h ⟨0, by simp⟩
+      simpa [restrictAssignment, restrictAssign, tuple4XZ, Tuple4Var] using this
+    · constructor
+      · have := congrFun h ⟨1, by simp⟩
+        simpa [restrictAssignment, restrictAssign, tuple4XZ, Tuple4Var] using this
+      · have := congrFun h ⟨3, by simp⟩
+        simpa [restrictAssignment, restrictAssign, tuple4XZ, Tuple4Var] using this
+  · rintro ⟨hA, hB, hD⟩
+    ext i
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simpa [restrictAssignment, restrictAssign, tuple4XZ, Tuple4Var] using hA
+      | succ n =>
+        cases n with
+        | zero =>
+          simpa [restrictAssignment, restrictAssign, tuple4XZ, Tuple4Var] using hB
+        | succ n =>
+          cases n with
+          | zero =>
+            simp at hn
+          | succ n =>
+            cases n with
+            | zero =>
+              simpa [restrictAssignment, restrictAssign, tuple4XZ, Tuple4Var] using hD
+            | succ _ =>
+              simp at hn
+
+private theorem restrict_eq_tuple4YZ_iff {G : DAG} {α β γ δ : Type}
+    (h1 : 1 ∈ G.nodes) (h2 : 2 ∈ G.nodes) (h3 : 3 ∈ G.nodes)
+    (hYZ : ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ) ⊆ G.nodes)
+    (x : Assignment G (Tuple4Var α β γ δ)) (b : β) (c : γ) (d : δ) :
+    restrictAssignment hYZ x = tuple4YZ b c d ↔
+      x ⟨1, h1⟩ = b ∧ x ⟨2, h2⟩ = c ∧ x ⟨3, h3⟩ = d := by
+  constructor
+  · intro h
+    constructor
+    · have := congrFun h ⟨1, by simp⟩
+      simpa [restrictAssignment, restrictAssign, tuple4YZ, Tuple4Var] using this
+    · constructor
+      · have := congrFun h ⟨2, by simp⟩
+        simpa [restrictAssignment, restrictAssign, tuple4YZ, Tuple4Var] using this
+      · have := congrFun h ⟨3, by simp⟩
+        simpa [restrictAssignment, restrictAssign, tuple4YZ, Tuple4Var] using this
+  · rintro ⟨hB, hC, hD⟩
+    ext i
+    cases i with
+    | mk n hn =>
+      cases n with
+      | zero =>
+        simp at hn
+      | succ n =>
+        cases n with
+        | zero =>
+          simpa [restrictAssignment, restrictAssign, tuple4YZ, Tuple4Var] using hB
+        | succ n =>
+          cases n with
+          | zero =>
+            simpa [restrictAssignment, restrictAssign, tuple4YZ, Tuple4Var] using hC
+          | succ n =>
+            cases n with
+            | zero =>
+              simpa [restrictAssignment, restrictAssign, tuple4YZ, Tuple4Var] using hD
+            | succ _ =>
+              simp at hn
+
+private theorem tuple4XYZ_restrict_Z {α β γ δ : Type}
+    (a : α) (b : β) (c : γ) (d : δ) :
+    restrictAssign
+        (subset_Z_of_XYZ ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ))
+        (tuple4XYZ a b c d) =
+      tuple4Z b d := by
+  ext i
+  cases i with
+  | mk n hn =>
+    cases n with
+    | zero =>
+      simp at hn
+    | succ n =>
+      cases n with
+      | zero =>
+        rfl
+      | succ n =>
+        cases n with
+        | zero =>
+          simp at hn
+        | succ n =>
+          cases n with
+          | zero =>
+            rfl
+          | succ _ =>
+            simp at hn
+
+private theorem tuple4XYZ_restrict_XZ {α β γ δ : Type}
+    (a : α) (b : β) (c : γ) (d : δ) :
+    restrictAssign
+        (subset_XZ_of_XYZ ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ))
+        (tuple4XYZ a b c d) =
+      tuple4XZ a b d := by
+  ext i
+  cases i with
+  | mk n hn =>
+    cases n with
+    | zero =>
+      rfl
+    | succ n =>
+      cases n with
+      | zero =>
+        rfl
+      | succ n =>
+        cases n with
+        | zero =>
+          simp at hn
+        | succ n =>
+          cases n with
+          | zero =>
+            rfl
+          | succ _ =>
+            simp at hn
+
+private theorem tuple4XYZ_restrict_YZ {α β γ δ : Type}
+    (a : α) (b : β) (c : γ) (d : δ) :
+    restrictAssign
+        (subset_YZ_of_XYZ ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ))
+        (tuple4XYZ a b c d) =
+      tuple4YZ b c d := by
+  ext i
+  cases i with
+  | mk n hn =>
+    cases n with
+    | zero =>
+      simp at hn
+    | succ n =>
+      cases n with
+      | zero =>
+        rfl
+      | succ n =>
+        cases n with
+        | zero =>
+          rfl
+        | succ n =>
+          cases n with
+          | zero =>
+            rfl
+          | succ _ =>
+            simp at hn
+
+private theorem project4_pmf_eq_marginalXYZ {G : DAG} {α β γ δ : Type}
+    [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
+    (M : PositiveMarkovModel G (Tuple4Var α β γ δ))
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes)
+    (h2 : 2 ∈ G.nodes) (h3 : 3 ∈ G.nodes)
+    (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ) ⊆ G.nodes)
+    (a : α) (b : β) (c : γ) (d : δ) :
+    (project4PMF M h0 h1 h2 h3).pmf (a, b, c, d) =
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ))
+        hnodes (tuple4XYZ a b c d) := by
+  unfold project4PMF FinitePMF.map marginalMass
+  apply Finset.sum_congr rfl
+  intro x hx
+  by_cases h : x ⟨0, h0⟩ = a ∧ x ⟨1, h1⟩ = b ∧ x ⟨2, h2⟩ = c ∧ x ⟨3, h3⟩ = d
+  · have hr : restrictAssignment hnodes x = tuple4XYZ a b c d :=
+      (restrict_eq_tuple4XYZ_iff h0 h1 h2 h3 hnodes x a b c d).2 h
+    have ht : (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+        (a, b, c, d) := by
+      rcases h with ⟨hA, hB, hC, hD⟩
+      change (x ⟨0, h0⟩, x ⟨1, h1⟩, x ⟨2, h2⟩, x ⟨3, h3⟩) = (a, b, c, d)
+      rw [hA, hB, hC, hD]
+      rfl
+    calc
+      (if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x = (a, b, c, d) then
+          M.P.pmf x else 0) = M.P.pmf x := if_pos ht
+      _ = (if restrictAssignment hnodes x = tuple4XYZ a b c d then M.P.pmf x else 0) :=
+          (if_pos hr).symm
+  · have hr : restrictAssignment hnodes x ≠ tuple4XYZ a b c d := by
+      intro hr
+      exact h ((restrict_eq_tuple4XYZ_iff h0 h1 h2 h3 hnodes x a b c d).1 hr)
+    have ht : ¬ (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+        (a, b, c, d) := by
+      intro ht
+      apply h
+      constructor
+      · exact congrArg Prod.fst ht
+      · constructor
+        · exact congrArg Prod.fst (congrArg Prod.snd ht)
+        · constructor
+          · exact congrArg Prod.fst (congrArg Prod.snd (congrArg Prod.snd ht))
+          · exact congrArg Prod.snd (congrArg Prod.snd (congrArg Prod.snd ht))
+    calc
+      (if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x = (a, b, c, d) then
+          M.P.pmf x else 0) = 0 := if_neg ht
+      _ = (if restrictAssignment hnodes x = tuple4XYZ a b c d then M.P.pmf x else 0) :=
+          (if_neg hr).symm
+
+private theorem project4_context_bd_eq_marginalZ {G : DAG} {α β γ δ : Type}
+    [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
+    (M : PositiveMarkovModel G (Tuple4Var α β γ δ))
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes)
+    (h2 : 2 ∈ G.nodes) (h3 : 3 ∈ G.nodes)
+    (hZ : ({1, 3} : Finset ℕ) ⊆ G.nodes)
+    (b : β) (d : δ) :
+    marginalYWMass (project4PMF M h0 h1 h2 h3) (b, d) =
+      marginalMass M.P ({1, 3} : Finset ℕ) hZ (tuple4Z b d) := by
+  unfold marginalYWMass project4PMF FinitePMF.map marginalMass
+  calc
+    (∑ x0 : α, ∑ z0 : γ,
+        ∑ x : Assignment G (Tuple4Var α β γ δ),
+          if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+              (x0, b, z0, d) then M.P.pmf x else 0)
+        = ∑ x0 : α, ∑ x : Assignment G (Tuple4Var α β γ δ), ∑ z0 : γ,
+            if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                (x0, b, z0, d) then M.P.pmf x else 0 := by
+      apply Finset.sum_congr rfl
+      intro x0 hx0
+      rw [Finset.sum_comm]
+    _ = ∑ x : Assignment G (Tuple4Var α β γ δ), ∑ x0 : α, ∑ z0 : γ,
+            if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                (x0, b, z0, d) then M.P.pmf x else 0 := by
+      rw [Finset.sum_comm]
+    _ = ∑ x : Assignment G (Tuple4Var α β γ δ),
+          if restrictAssignment hZ x = tuple4Z b d then M.P.pmf x else 0 := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      by_cases hbd : x ⟨1, h1⟩ = b ∧ x ⟨3, h3⟩ = d
+      · have hr : restrictAssignment hZ x = tuple4Z b d :=
+          (restrict_eq_tuple4Z_iff h1 h3 hZ x b d).2 hbd
+        rcases hbd with ⟨hB, hD⟩
+        have hinner :
+            (∑ x0 : α, ∑ z0 : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (x0, b, z0, d) then M.P.pmf x else 0) = M.P.pmf x := by
+          calc
+            (∑ x0 : α, ∑ z0 : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (x0, b, z0, d) then M.P.pmf x else 0)
+                = ∑ q : α × γ,
+                    if (x ⟨0, h0⟩, x ⟨2, h2⟩) = q then M.P.pmf x else 0 := by
+              rw [← Finset.sum_product' (s := (Finset.univ : Finset α))
+                (t := (Finset.univ : Finset γ))]
+              simp [hB, hD, Prod.ext_iff]
+            _ = M.P.pmf x := by
+              exact
+                (Fintype.sum_ite_eq
+                  (i := (x ⟨0, h0⟩, x ⟨2, h2⟩))
+                  (f := fun _ : α × γ => M.P.pmf x))
+        calc
+          (∑ x0 : α, ∑ z0 : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (x0, b, z0, d) then M.P.pmf x else 0) = M.P.pmf x := hinner
+          _ = (if restrictAssignment hZ x = tuple4Z b d then M.P.pmf x else 0) :=
+            (if_pos hr).symm
+      · have hr : restrictAssignment hZ x ≠ tuple4Z b d := by
+          intro hr
+          exact hbd ((restrict_eq_tuple4Z_iff h1 h3 hZ x b d).1 hr)
+        have hinner :
+            (∑ x0 : α, ∑ z0 : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (x0, b, z0, d) then M.P.pmf x else 0) = 0 := by
+          apply Finset.sum_eq_zero
+          intro x0 hx0
+          apply Finset.sum_eq_zero
+          intro z0 hz0
+          rw [if_neg]
+          intro ht
+          apply hbd
+          constructor
+          · exact congrArg Prod.fst (congrArg Prod.snd ht)
+          · exact congrArg Prod.snd (congrArg Prod.snd (congrArg Prod.snd ht))
+        calc
+          (∑ x0 : α, ∑ z0 : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (x0, b, z0, d) then M.P.pmf x else 0) = 0 := hinner
+          _ = (if restrictAssignment hZ x = tuple4Z b d then M.P.pmf x else 0) :=
+            (if_neg hr).symm
+
+private theorem project4_sum_c_eq_marginalXZ {G : DAG} {α β γ δ : Type}
+    [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
+    (M : PositiveMarkovModel G (Tuple4Var α β γ δ))
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes)
+    (h2 : 2 ∈ G.nodes) (h3 : 3 ∈ G.nodes)
+    (hXZ : ({0} : Finset ℕ) ∪ ({1, 3} : Finset ℕ) ⊆ G.nodes)
+    (a : α) (b : β) (d : δ) :
+    marginalXYWMass (project4PMF M h0 h1 h2 h3) (a, b, d) =
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({1, 3} : Finset ℕ)) hXZ (tuple4XZ a b d) := by
+  unfold marginalXYWMass project4PMF FinitePMF.map marginalMass
+  calc
+    (∑ z0 : γ, ∑ x : Assignment G (Tuple4Var α β γ δ),
+        if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+            (a, b, z0, d) then M.P.pmf x else 0)
+        = ∑ x : Assignment G (Tuple4Var α β γ δ), ∑ z0 : γ,
+            if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                (a, b, z0, d) then M.P.pmf x else 0 := by
+      rw [Finset.sum_comm]
+    _ = ∑ x : Assignment G (Tuple4Var α β γ δ),
+          if restrictAssignment hXZ x = tuple4XZ a b d then M.P.pmf x else 0 := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      by_cases habd : x ⟨0, h0⟩ = a ∧ x ⟨1, h1⟩ = b ∧ x ⟨3, h3⟩ = d
+      · have hr : restrictAssignment hXZ x = tuple4XZ a b d :=
+          (restrict_eq_tuple4XZ_iff h0 h1 h3 hXZ x a b d).2 habd
+        rcases habd with ⟨hA, hB, hD⟩
+        have hinner :
+            (∑ z0 : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (a, b, z0, d) then M.P.pmf x else 0) = M.P.pmf x := by
+          calc
+            (∑ z0 : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (a, b, z0, d) then M.P.pmf x else 0)
+                = ∑ z0 : γ, if x ⟨2, h2⟩ = z0 then M.P.pmf x else 0 := by
+              apply Finset.sum_congr rfl
+              intro z0 hz0
+              by_cases hC : x ⟨2, h2⟩ = z0
+              · have ht : (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                    (a, b, z0, d) := by
+                  change (x ⟨0, h0⟩, x ⟨1, h1⟩, x ⟨2, h2⟩, x ⟨3, h3⟩) = (a, b, z0, d)
+                  rw [hA, hB, hC, hD]
+                  rfl
+                rw [if_pos ht, if_pos hC]
+              · have ht : ¬ (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                    (a, b, z0, d) := by
+                  intro ht
+                  exact hC (congrArg Prod.fst (congrArg Prod.snd (congrArg Prod.snd ht)))
+                rw [if_neg ht, if_neg hC]
+            _ = M.P.pmf x := by
+              exact
+                (Fintype.sum_ite_eq
+                  (i := x ⟨2, h2⟩)
+                  (f := fun _ : γ => M.P.pmf x))
+        calc
+          (∑ z0 : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (a, b, z0, d) then M.P.pmf x else 0) = M.P.pmf x := hinner
+          _ = (if restrictAssignment hXZ x = tuple4XZ a b d then M.P.pmf x else 0) :=
+            (if_pos hr).symm
+      · have hr : restrictAssignment hXZ x ≠ tuple4XZ a b d := by
+          intro hr
+          exact habd ((restrict_eq_tuple4XZ_iff h0 h1 h3 hXZ x a b d).1 hr)
+        have hinner :
+            (∑ z0 : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (a, b, z0, d) then M.P.pmf x else 0) = 0 := by
+          apply Finset.sum_eq_zero
+          intro z0 hz0
+          rw [if_neg]
+          intro ht
+          apply habd
+          constructor
+          · exact congrArg Prod.fst ht
+          · constructor
+            · exact congrArg Prod.fst (congrArg Prod.snd ht)
+            · exact congrArg Prod.snd (congrArg Prod.snd (congrArg Prod.snd ht))
+        calc
+          (∑ z0 : γ,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (a, b, z0, d) then M.P.pmf x else 0) = 0 := hinner
+          _ = (if restrictAssignment hXZ x = tuple4XZ a b d then M.P.pmf x else 0) :=
+            (if_neg hr).symm
+
+private theorem project4_sum_a_eq_marginalYZ {G : DAG} {α β γ δ : Type}
+    [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
+    [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
+    (M : PositiveMarkovModel G (Tuple4Var α β γ δ))
+    (h0 : 0 ∈ G.nodes) (h1 : 1 ∈ G.nodes)
+    (h2 : 2 ∈ G.nodes) (h3 : 3 ∈ G.nodes)
+    (hYZ : ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ) ⊆ G.nodes)
+    (b : β) (c : γ) (d : δ) :
+    marginalYZWMass (project4PMF M h0 h1 h2 h3) (b, c, d) =
+      marginalMass M.P (({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ)) hYZ (tuple4YZ b c d) := by
+  unfold marginalYZWMass project4PMF FinitePMF.map marginalMass
+  calc
+    (∑ x0 : α, ∑ x : Assignment G (Tuple4Var α β γ δ),
+        if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+            (x0, b, c, d) then M.P.pmf x else 0)
+        = ∑ x : Assignment G (Tuple4Var α β γ δ), ∑ x0 : α,
+            if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                (x0, b, c, d) then M.P.pmf x else 0 := by
+      rw [Finset.sum_comm]
+    _ = ∑ x : Assignment G (Tuple4Var α β γ δ),
+          if restrictAssignment hYZ x = tuple4YZ b c d then M.P.pmf x else 0 := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      by_cases hbcd : x ⟨1, h1⟩ = b ∧ x ⟨2, h2⟩ = c ∧ x ⟨3, h3⟩ = d
+      · have hr : restrictAssignment hYZ x = tuple4YZ b c d :=
+          (restrict_eq_tuple4YZ_iff h1 h2 h3 hYZ x b c d).2 hbcd
+        rcases hbcd with ⟨hB, hC, hD⟩
+        have hinner :
+            (∑ x0 : α,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (x0, b, c, d) then M.P.pmf x else 0) = M.P.pmf x := by
+          calc
+            (∑ x0 : α,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (x0, b, c, d) then M.P.pmf x else 0)
+                = ∑ x0 : α, if x ⟨0, h0⟩ = x0 then M.P.pmf x else 0 := by
+              apply Finset.sum_congr rfl
+              intro x0 hx0
+              by_cases hA : x ⟨0, h0⟩ = x0
+              · have ht : (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                    (x0, b, c, d) := by
+                  change (x ⟨0, h0⟩, x ⟨1, h1⟩, x ⟨2, h2⟩, x ⟨3, h3⟩) = (x0, b, c, d)
+                  rw [hA, hB, hC, hD]
+                  rfl
+                rw [if_pos ht, if_pos hA]
+              · have ht : ¬ (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                    (x0, b, c, d) := by
+                  intro ht
+                  exact hA (congrArg Prod.fst ht)
+                rw [if_neg ht, if_neg hA]
+            _ = M.P.pmf x := by
+              exact
+                (Fintype.sum_ite_eq
+                  (i := x ⟨0, h0⟩)
+                  (f := fun _ : α => M.P.pmf x))
+        calc
+          (∑ x0 : α,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (x0, b, c, d) then M.P.pmf x else 0) = M.P.pmf x := hinner
+          _ = (if restrictAssignment hYZ x = tuple4YZ b c d then M.P.pmf x else 0) :=
+            (if_pos hr).symm
+      · have hr : restrictAssignment hYZ x ≠ tuple4YZ b c d := by
+          intro hr
+          exact hbcd ((restrict_eq_tuple4YZ_iff h1 h2 h3 hYZ x b c d).1 hr)
+        have hinner :
+            (∑ x0 : α,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (x0, b, c, d) then M.P.pmf x else 0) = 0 := by
+          apply Finset.sum_eq_zero
+          intro x0 hx0
+          rw [if_neg]
+          intro ht
+          apply hbcd
+          constructor
+          · exact congrArg Prod.fst (congrArg Prod.snd ht)
+          · constructor
+            · exact congrArg Prod.fst (congrArg Prod.snd (congrArg Prod.snd ht))
+            · exact congrArg Prod.snd (congrArg Prod.snd (congrArg Prod.snd ht))
+        calc
+          (∑ x0 : α,
+              if (fun a => (a ⟨0, h0⟩, a ⟨1, h1⟩, a ⟨2, h2⟩, a ⟨3, h3⟩)) x =
+                  (x0, b, c, d) then M.P.pmf x else 0) = 0 := hinner
+          _ = (if restrictAssignment hYZ x = tuple4YZ b c d then M.P.pmf x else 0) :=
+            (if_neg hr).symm
 
 -- Keep the variable context for unsafe axioms aligned with `MarkovGenerator` APIs.
 variable {G : DAG} {Var : ℕ → Type}
@@ -524,26 +1689,107 @@ axiom localMarkov_dsep_global_CIAlg
     (hsep : dSeparates G X Y Z) :
     CIAlg P X Y Z hnodes
 
--- Pending audit entry: three-variable projection bridge.
-axiom isMarkovChain_of_CIExp_project3 {G : DAG} {α β γ : Type}
+-- Three-variable projection bridge.
+theorem isMarkovChain_of_CIExp_project3 {G : DAG} {α β γ : Type}
     [Fintype α] [Fintype β] [Fintype γ]
     [DecidableEq α] [DecidableEq β] [DecidableEq γ]
     (M : PositiveMarkovModel G (Tuple3Var α β γ))
     (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ) ⊆ G.nodes)
     (hci : CIExp M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ) hnodes) :
     UnsafeIsMarkovChain (project3PMF M
-      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)))
+      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) := by
+  intro a b c
+  let h0 : 0 ∈ G.nodes := hnodes (by simp)
+  let h1 : 1 ∈ G.nodes := hnodes (by simp)
+  let h2 : 2 ∈ G.nodes := hnodes (by simp)
+  have hAlg :
+      CIAlg M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ) hnodes :=
+    (CIExp_iff_CIAlg_of_positive M.P M.positive
+      ({0} : Finset ℕ) ({2} : Finset ℕ) ({1} : Finset ℕ) hnodes).1 hci
+  have hpoint := hAlg (tuple3XYZ a b c)
+  have hpoint' :
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ))
+          hnodes (tuple3XYZ a b c) *
+        marginalMass M.P ({1} : Finset ℕ) (subset_Z_of_union hnodes) (tuple3Z b) =
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({1} : Finset ℕ))
+          (subset_XZ_of_union hnodes) (tuple3XZ a b) *
+        marginalMass M.P (({2} : Finset ℕ) ∪ ({1} : Finset ℕ))
+          (subset_YZ_of_union hnodes) (tuple3YZ b c) := by
+    have hZr := tuple3XYZ_restrict_Z (a := a) (b := b) (c := c)
+    have hXZr := tuple3XYZ_restrict_XZ (a := a) (b := b) (c := c)
+    have hYZr := tuple3XYZ_restrict_YZ (a := a) (b := b) (c := c)
+    rw [hZr, hXZr, hYZr] at hpoint
+    exact hpoint
+  calc
+    (project3PMF M h0 h1 h2).pmf (a, b, c) *
+        (∑ a' : α, ∑ c' : γ, (project3PMF M h0 h1 h2).pmf (a', b, c')) =
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1} : Finset ℕ))
+          hnodes (tuple3XYZ a b c) *
+        marginalMass M.P ({1} : Finset ℕ) (subset_Z_of_union hnodes) (tuple3Z b) := by
+        rw [project3_pmf_eq_marginalXYZ M h0 h1 h2 hnodes a b c,
+          project3_context_b_eq_marginalZ M h0 h1 h2 (subset_Z_of_union hnodes) b]
+    _ =
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({1} : Finset ℕ))
+          (subset_XZ_of_union hnodes) (tuple3XZ a b) *
+        marginalMass M.P (({2} : Finset ℕ) ∪ ({1} : Finset ℕ))
+          (subset_YZ_of_union hnodes) (tuple3YZ b c) := hpoint'
+    _ =
+      (∑ c' : γ, (project3PMF M h0 h1 h2).pmf (a, b, c')) *
+        (∑ a' : α, (project3PMF M h0 h1 h2).pmf (a', b, c)) := by
+        rw [project3_sum_c_eq_marginalXZ M h0 h1 h2 (subset_XZ_of_union hnodes) a b,
+          project3_sum_a_eq_marginalYZ M h0 h1 h2 (subset_YZ_of_union hnodes) b c]
 
 
--- Pending audit entry: four-variable projection bridge.
-axiom condMarkov_of_CIExp_project4 {G : DAG} {α β γ δ : Type}
+-- Four-variable projection bridge.
+theorem condMarkov_of_CIExp_project4 {G : DAG} {α β γ δ : Type}
     [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
     [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
     (M : PositiveMarkovModel G (Tuple4Var α β γ δ))
     (hnodes : ({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ) ⊆ G.nodes)
     (hci : CIExp M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ) hnodes) :
     condMarkov (project4PMF M
-      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)))
+      (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp)) (hnodes (by simp))) := by
+  intro a b c d
+  let h0 : 0 ∈ G.nodes := hnodes (by simp)
+  let h1 : 1 ∈ G.nodes := hnodes (by simp)
+  let h2 : 2 ∈ G.nodes := hnodes (by simp)
+  let h3 : 3 ∈ G.nodes := hnodes (by simp)
+  have hAlg :
+      CIAlg M.P ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ) hnodes :=
+    (CIExp_iff_CIAlg_of_positive M.P M.positive
+      ({0} : Finset ℕ) ({2} : Finset ℕ) ({1, 3} : Finset ℕ) hnodes).1 hci
+  have hpoint := hAlg (tuple4XYZ a b c d)
+  have hpoint' :
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ))
+          hnodes (tuple4XYZ a b c d) *
+        marginalMass M.P ({1, 3} : Finset ℕ) (subset_Z_of_union hnodes) (tuple4Z b d) =
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({1, 3} : Finset ℕ))
+          (subset_XZ_of_union hnodes) (tuple4XZ a b d) *
+        marginalMass M.P (({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ))
+          (subset_YZ_of_union hnodes) (tuple4YZ b c d) := by
+    have hZr := tuple4XYZ_restrict_Z (a := a) (b := b) (c := c) (d := d)
+    have hXZr := tuple4XYZ_restrict_XZ (a := a) (b := b) (c := c) (d := d)
+    have hYZr := tuple4XYZ_restrict_YZ (a := a) (b := b) (c := c) (d := d)
+    rw [hZr, hXZr, hYZr] at hpoint
+    exact hpoint
+  calc
+    (project4PMF M h0 h1 h2 h3).pmf (a, b, c, d) *
+        marginalYWMass (project4PMF M h0 h1 h2 h3) (b, d) =
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ))
+          hnodes (tuple4XYZ a b c d) *
+        marginalMass M.P ({1, 3} : Finset ℕ) (subset_Z_of_union hnodes) (tuple4Z b d) := by
+        rw [project4_pmf_eq_marginalXYZ M h0 h1 h2 h3 hnodes a b c d,
+          project4_context_bd_eq_marginalZ M h0 h1 h2 h3 (subset_Z_of_union hnodes) b d]
+    _ =
+      marginalMass M.P (({0} : Finset ℕ) ∪ ({1, 3} : Finset ℕ))
+          (subset_XZ_of_union hnodes) (tuple4XZ a b d) *
+        marginalMass M.P (({2} : Finset ℕ) ∪ ({1, 3} : Finset ℕ))
+          (subset_YZ_of_union hnodes) (tuple4YZ b c d) := hpoint'
+    _ =
+      marginalXYWMass (project4PMF M h0 h1 h2 h3) (a, b, d) *
+        marginalYZWMass (project4PMF M h0 h1 h2 h3) (b, c, d) := by
+        rw [project4_sum_c_eq_marginalXZ M h0 h1 h2 h3 (subset_XZ_of_union hnodes) a b d,
+          project4_sum_a_eq_marginalYZ M h0 h1 h2 h3 (subset_YZ_of_union hnodes) b c d]
 
 
 end AssignmentSemantics
