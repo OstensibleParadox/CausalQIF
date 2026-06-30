@@ -1,181 +1,237 @@
-# 智能体审计的双重证书：分离结构不可恢复性与决策相关性
+# CausalQIF：有限量化信息流证书的类型化 Lean 库
 
 ## 摘要
 
-对已部署的语言模型智能体进行审计，需要两个可分离的量：多少有效操作状态逃逸了记录轨迹，以及这些残差状态中有多少驱动了行为。本文提出一个双重证书协议（dual-certificate protocol）。静态证书 $\varepsilon_{\text{state}}^{\text{UB}}$ 通过未追踪信道上的最小割对残差隐状态熵给出上界。动态证书 $\delta_{\text{act}}^{\text{LB}}$ 通过一个在条件数据处理不等式（conditional DPI）框架下可容许的探针分类体系——重放（replay）、干预（intervention）、代理（proxy）——对残差决策相关性给出下界。这两个轴是独立的。在 ReAct 实验中，日志记录将静态边界从 $16{,}464$ 位逐步消减至 $0$ 位；受控重放将休眠计算器任务与活跃规划任务在相同拓扑下区分开来——软策略偏移为 $0.0163$ 位，95\% CI $[0.0124,0.0208]$——argmax 工具选择保持不变。将 $\delta_{\text{act}}^{\text{LB}}$ 索引化到隐信道坐标上，即得到一个激活剖面（activation profile）。在 LLaDA 去噪轨迹上，扰动在早期步骤中保持接近底线，并在最终绑定步骤升至 $0.110$ 位（95\% CI $[0.052,0.234]$）。在多智能体通信边上，交换一个 Worker 的私人报告给出 $0.901$ 位（95\% CI $[0.873,0.928]$）。一个 Lean 4 工件对自回归零割情形进行了机械化验证，并从 Mathlib 第一原理证明了条件 DPI 和链式法则归约，仅割集容量上界保留为外生结构前提。
+量化信息流（QIF）经常被用来说明一个系统中哪些状态没有被观察者恢复、哪些状态仍然影响后续行为。可是，在实际论文中，这类论证常把三种不同对象混在一起：有限分布上的信息论恒等式、部署图上的 Markov 或割集假设、以及具体实验探针得到的数值。本文的主角不是一个新的实验审计协议，而是 `CausalQIF`：一个面向有限离散系统的 Lean 4 类型化库，用来把这些对象分层、命名并机械化检查。
+
+`CausalQIF` 提供三层接口。第一层是有限 PMF 上的信息论核心，包括熵、条件熵、互信息、条件互信息、KL 非负性、链式法则以及条件数据处理不等式。第二层是证书库，将 QIF 中常用的审计语句表达为可复用的 Lean 定理：动态探针证书来自 `cond_dpi` 和 `prop2_dynamic_lb`；确定性探针由 `prop2_dynamic_lb_deterministic_probe` 自动卸除 Markov 前提；静态证书由 `static_decomposition`、`prop1_static_ub` 和 `prop1_static_ub_from_cut` 把迹缺口分解、割变量 DPI 与容量上界连接起来。第三层是有限有向图和 d-separation 接口，它证明了查询域受保护时的图分离结果，同时把仍未闭合的 graphoid/global-Markov 桥接假设集中在 `UnsafeBridge.lean` 的 5 个显式 `axiom` 中，并用 `not_forall_dsep_complete` 记录不受限 d-separation 命题为假。
+
+因此，本文的 POPL 式贡献是一个可检查的 proof engineering artifact：它说明在有限 QIF 证书中，哪些结论已经由 Lean 的类型和定理保证，哪些结论仍是部署建模前提，哪些实验数值只是库接口的客户端实例。智能体、扩散语言模型和多智能体通信实验在本文中只作为应用用例；它们展示如何实例化库中的状态、轨迹、探针和割变量，而不是替代形式化结果本身。
 
 ## 关键词
 
-智能体审计（agent audit）、双重证书（dual certificates）、结构不可恢复性（structural unrecoverability）、决策相关性（decision relevance）、条件数据处理不等式（conditional DPI）、割集上界（cut-set bound）、自回归零割（autoregressive zero-cut）、Lean 4 形式化
+Lean 4、量化信息流（QIF）、有限概率、类型化 PMF、条件数据处理不等式、d-separation、形式化验证、证书库、AI agent auditing
 
 ## 一、引言
 
-考虑一个 ReAct 风格的智能体，配有一个每轮容量为 $16{,}384$ 位的未登录草稿板（scratchpad）。输出轨迹上的回归测试显示无行为变化，然而在受控重放下禁用草稿板后的同一条轨迹，揭示了规划任务上工具令牌概率分布中 $0.0163$ 位的偏移。这一差异不是探针伪影。它是审计的一个结构特征：记录轨迹未能区分两个性质上不同的系统——一个其隐藏容量在测试分布上处于休眠状态，另一个其隐藏容量处于活跃状态。识别哪一个成立，正是审计的任务。
+QIF 论文中常见的核心判断很简单：观察者看到的轨迹是否足以恢复系统的有效状态？剩余状态是否影响下一步行为？如果答案依赖一个实验探针、一个图结构假设和一个信息论不等式，那么读者需要知道每一步到底由什么保证。
 
-这是两个不同的量：多少内部状态逃逸了轨迹，以及其中多少驱动了下一步行动。仅依赖输出的黑盒审计视图会将它们合并为一个既不可计算也不具诊断性的单一「隐藏性」判断。一个拥有大日志缺口但无行为性隐藏驱动的系统，与一个拥有小缺口但强驱动的系统是无法区分的，尽管二者的审计含义截然不同。
+这正是 POPL 读者会关心的问题。一个实验系统可以报告互信息估计值，但该估计值何时是目标量的下界？一个部署图可以报告割集容量，但该容量何时约束不可见状态熵？一个 d-separation 图可以暗示条件独立，但查询域、positivity、local Markov 和 graphoid 闭包条件在哪里出现？如果这些边界没有被机器检查，论文容易把“已证明的有限恒等式”和“应由部署者承担的建模前提”写成同一种语气。
 
-本文提出一个双重证书协议，分别回答每个问题。静态证书 $\varepsilon_{\text{state}}^{\text{UB}}$ 仅依据部署拓扑，通过未追踪信道上的割集界对残差熵 $H(S_t \mid \tilde T_t)$ 给出上界。动态证书 $\delta_{\text{act}}^{\text{LB}}$ 通过三种探针类别之一（重放、干预或代理，取决于审计者的访问权限）对残差决策相关性 $I(S_t; A_t \mid \tilde T_t)$ 给出下界。这两个证书是独立的轴：一个 $\varepsilon_{\text{state}}^{\text{UB}}$ 大而 $\delta_{\text{act}}^{\text{LB}}$ 小的系统具有不可恢复但处于休眠状态的状态；两个都大的系统则具有不可恢复且活跃的状态。两者都是可审计的。两者都不是单个标量所能揭示的。
+`CausalQIF` 把这个边界作为库设计目标。它不试图认证真实世界智能体，也不声称解决连续状态、无限测度或任意黑盒系统的可审计性。它做一件更窄但更适合 POPL 的事：在 Lean 4 中建立一个有限、类型化、可导入的 QIF 证明栈，使常用证书语句必须通过显式类型、显式 PMF、显式条件独立谓词和显式外部前提表达。
 
-动态轴亦可被索引化。审计者不仅可追问残差状态是否重要，还可追问它在*何处*重要：哪个模块、哪个去噪步骤或哪个通信边承载了决策相关性。这将证书从标量诊断转化为部署隐藏状态几何上的激活剖面。
+本文因此把问题从“实验是否证明某个 agent 隐藏状态活跃”改写为：
 
-以 $\tilde T_t$ 为条件本身就是保护措施的一部分，而非干扰项。如果一个模型将隐写或压缩式推理写入记录轨迹，则该信息位于 $\tilde T_t$ 中，并被 $I(S_t; A_t \mid \tilde T_t)$ 条件化移除。动态证书衡量的是超越已记录轨迹的残差决策相关性；它不计数已经对审计记录可见的隐藏性。
+1. 有限 QIF 证书需要哪些基础信息论定理？
+2. 这些定理在 Lean 中应如何类型化，才能避免状态、轨迹、探针和行动变量混淆？
+3. 图结构、Markov 条件、容量预算和经验探针哪些部分能在库内证明，哪些部分必须留作外部假设？
+4. 一个下游审计实验如何作为库客户端，而不是作为论文主论证的替代物？
 
-**贡献。** 本文为智能体审计定义了一个双重证书框架 $(\varepsilon_{\text{state}}^{\text{UB}}, \delta_{\text{act}}^{\text{LB}})$。命题~\ref{prop:static-ub} 通过未追踪信道上的最小割给出了残差隐状态熵的拓扑上界。命题~\ref{prop:dynamic-lb} 并非一个新的信息论不等式；它是一个审计归约，将条件 DPI 转化为残差决策相关性的三个可容许下界探针——重放、干预和代理。
+### 1.1 贡献
 
-我们在三种残差状态几何上评估该协议：一个 ReAct 草稿板模块、一条扩散语言模型去噪轨迹，以及一条多智能体私人报告边。同一计算公式在不同设置中被复用，但索引从模块变为时间步再变为通信边。附录中的校准覆盖了只读代理估计和一个人工合成真实场景，其中静态边界与真实隐藏状态熵相匹配。一个 Lean 4 工件从 Mathlib 第一原理对推论~\ref{cor:auto-exact} 进行了机械化验证，并从有限离散定义证明了迹缺口链式法则和条件 DPI，仅割集容量上界保留为命题~\ref{prop:static-ub} 的外生结构前提（精确边界见 §\ref{sec:external-axioms}）。
+本文贡献如下。
 
-## 二、相关工作
+**有限信息论核心。** `CausalQIF.InfoTheory` 在有限类型和显式 PMF 上定义熵、条件熵、互信息和条件互信息，并证明非负性、链式法则、log-cardinality 上界以及条件 DPI。核心结论 `cond_dpi` 是后续动态证书和割集归约的共同基础。
 
-**探针、修补与因果抽象。** 因果抽象（causal abstraction）、隐藏知识诱发（latent-knowledge elicitation）、零空间投影（nullspace projection）和遗忘式探针（amnesic probing）是代理式证据的自然来源：当它们暴露一个探针变量 $Z_t = \varphi(S_t)$ 且所需的条件假设成立时，其与行动的互信息可通过代理证书加以解释。因果追踪/ROME、表征工程和激活值添加则提供干预式证据，前提是修补仅通过 $S_t$ 影响行动。
+**类型化证书接口。** `CausalQIF.Certificates` 提供面向 QIF 的 proof API。动态证书由 `prop2_dynamic_lb` 表达：若探针在给定轨迹下只通过状态影响行动，则探针与行动的条件互信息下界真实残差决策相关性。确定性读出 `probe : State -> Trace -> Probe` 通过 `condMarkov_deterministicProbePMF` 自动满足 Markov 前提。静态证书由 `static_decomposition` 精确分解可见/完整轨迹缺口，再由 `prop1_static_ub`、`cut_set_dpi_bound` 和 `prop1_static_ub_from_cut` 在外部割容量前提下给出上界。
 
-**黑盒审计与网络信息论。** 性质检验和黑盒安全审计研究仅从输出中可以推断出什么。本文的区别在于：仅输出访问可以支持行为测试，但其本身并不为 $\delta_\text{act}$ 提供下界；而当结构访问可用时，$\varepsilon_{\text{state}}^{\text{UB}}$ 仍然可以从拓扑计算得出。静态证书证明将割集上界应用于时间展开 DAG（完整推导见附录~\ref{app:netinfo}）。
+**图层和前提账本。** `CausalQIF.Graph` 与 `CausalQIF.DSeparation` 提供有限 DAG、trail、Bayes-ball、moralization 和 d-separation 机制。库证明了 pairwise-disjoint 查询域下的 `dsep_complete_of_query`，并给出 `not_forall_dsep_complete` 作为反例，防止把标准查询域外的错误命题写进论文。仍未闭合的全局 Markov 桥接被集中在 `DSeparation/UnsafeBridge.lean` 的 5 个显式 `axiom` 中。
 
-**扩散语言模型智能体。** LLaDA 实现了大规模掩码扩散语言建模，具有双向去噪和指令跟随能力。最近的智能体工作进一步研究了多步决策和工具使用流程中的扩散语言模型，包括与自回归智能体的匹配比较。这些系统使中间去噪潜变量成为动态证书的一个天然的非 ReAct 隐藏信道。
+**可复用案例接口。** `Examples.CaseStudy` 展示一比特 cut-set bound 案例如何从 typed deployment、d-separation 前提、KKT 容量证书和 cut-set 归约组合出来。智能体、扩散 LM 和多智能体实验被重新定位为客户端：它们提供状态、轨迹、探针和容量实例，调用库中的定理边界，而不是构成库本身的正确性证明。
 
-## 三、设置与审计机制
+## 二、库的范围与非目标
 
-标准信息记号遵循 Cover \& Elements。所有对数以 2 为底；熵和互信息以位（bits）报告。
+`CausalQIF` 的范围是有限离散系统。所有主要定理都在 `Fintype` 和 `DecidableEq` 假设下工作，概率对象是显式的 `FinitePMF`，熵和互信息是有限求和公式。这个选择牺牲了测度论一般性，但换来了三个工程性质。
 
-在第 $t$ 步：*完整轨迹* $T_t$（所有中间激活）、*记录轨迹* $\tilde T_t \subseteq T_t$（审计者可见）、*有效状态* $S_t$（内部计算）、*行动* $A_t$（下一令牌）、*未记录源* $U_t$（不在 $\tilde T_t$ 中的外生输入）。
+第一，变量的角色由类型区分。状态、可见轨迹、缺失轨迹、行动、探针和割变量在 Lean 中不是同一个无类型随机变量集合，而是不同类型参数。错误地把 probe 当成 action、把 missing trace 当成 visible trace，不能在 API 层静默通过。
 
-### 3.1 两个核心审计量
+第二，证书前提不会消失在自然语言中。动态证书要求 `condMarkov` 或由确定性 probe 构造卸除该前提；静态 cut-set 证书要求容量上界和 cut 变量的 Markov 前提；图到条件独立的桥接要求 positivity、合法查询域和当前仍显式列出的 graphoid/global-Markov 假设。
 
-*定义（核心审计量）*：双重证书所针对的两个量是：
-- **结构不可恢复性：** $\varepsilon_\text{state} := H(S_t \mid \tilde T_t)$，在给定可见轨迹条件下有效状态的残差熵。
-- **残差决策相关性：** $\delta_\text{act} := I(S_t; A_t \mid \tilde T_t)$，在给定可见轨迹条件下有效状态与下一行动之间的互信息。
+第三，库不把经验估计包装成定理。互信息估计器、bootstrap 置信区间、模型扰动协议和实验任务划分都属于客户端代码或论文实验。Lean 证明的是：如果客户端提供的变量满足接口前提，那么相应的数量具有上界或下界意义。
 
-两个量在部署中均不可直接计算：$\varepsilon_\text{state}$ 需要恢复完整的内部状态分布，$\delta_\text{act}$ 需要观测 $S_t$。双重证书框架针对的是：
-- 一个*结构上界* $\varepsilon_{\text{state}}^{\text{UB}} \geq \varepsilon_\text{state}$，从部署拓扑计算得出（§\ref{sec:static-cert}）；
-- 一个*经验下界* $\delta_{\text{act}}^{\text{LB}} \leq \delta_\text{act}$，通过探针变量估计（§\ref{sec:dynamic-cert}）。
+非目标也同样明确。本文不声称认证真实部署的 alignment，不处理连续状态或无限样本极限，不证明任意经验 probe 都可容许，也不把 d-separation 到概率条件独立的全部 Verma-Pearl 定理闭合在当前版本内。相反，库把这些内容标成 proof boundary。
 
-所报告的审计对为 $(\varepsilon_{\text{state}}^{\text{UB}}, \delta_{\text{act}}^{\text{LB}})$。
+## 三、有限信息论核心
 
-仅凭行为观察无法识别这两个量：不同的因果图可以在 $(\tilde T_t, A_t)$ 对上产生相同的联合分布，因此观察输出不能固定 $H(S_t \mid \tilde T_t)$ 或 $I(S_t; A_t \mid \tilde T_t)$。静态证书通过拓扑的结构访问解决第一个问题；动态证书通过灰盒探针访问解决第二个问题。
+`CausalQIF.InfoTheory` 是库的底层。它将常用 QIF 量写成有限类型上的函数，而不是纸面上的重载符号。
 
-*注（互补性与继承性）*：由数据处理不等式，$\delta_\text{act} \leq \varepsilon_\text{state}$。证书在其各自的有界方向上继承这一排序，但仍然是审计证据的独立轴：
-- 若 $\varepsilon_{\text{state}}^{\text{UB}} = 0$（全日志架构），则 $\varepsilon_\text{state} = 0$ 且 $\delta_\text{act} = 0$；任何有效的下界均满足 $\delta_{\text{act}}^{\text{LB}} = 0$。
-- 若 $\delta_{\text{act}}^{\text{LB}} = 0$（在最佳可用探针下），隐藏状态可能仍然存在：$\varepsilon_{\text{state}}^{\text{UB}}$ 可能很大，而当前任务并未激活该隐藏容量（休眠不可恢复状态）。逆否命题（$\delta_{\text{act}}^{\text{LB}} > 0 \Rightarrow \varepsilon_{\text{state}}^{\text{UB}} > 0$）由 DPI 排序推出。
-因此，审计解释是二维的：部署团队必须同时报告残差信道预算和最强可容许行为探针，而不是将它们坍缩为单一的隐藏性评分。
+核心对象包括：
 
-### 3.2 审计访问模式
+- `entropyOf`：对有限质量函数计算 Shannon 熵。
+- `condEntropy` 与条件熵相关边缘化定义。
+- `I_XZ_W`、`I_YZ_W`、`I_SA_cond_T`：四变量或三变量 PMF 上的条件互信息接口。
+- `condMarkov`：四变量 PMF 上的具体条件 Markov 方程。
 
-1. *结构访问。* 审计者拥有部署架构、日志清单和协议预算。这足以从拓扑计算 $\varepsilon_{\text{state}}^{\text{UB}}$（§\ref{sec:static-cert}），但不提供动态下界。
-2. *受控重放访问。* 审计者可以在原样（wild）和重放（replay）状态下重新运行同一系统，同时保持可见轨迹不变。当重放机制仅通过缺失状态恢复影响行动时，这支持重放证书。
-3. *代理或干预访问。* 审计者可以读取代理变量 $Z_t = f(S_t)$ 或扰动一个隐藏模块。这些支持关于 $\delta_\text{act}$ 的条件 DPI 下界（§\ref{sec:dynamic-cert}）。
+这一层证明的关键结果包括 `entropy_nonneg`、`entropy_le_log_card`、`condMutualInfo_nonneg`、`I_XY_Z_W_eq_I_XZ_W_add_I_YZ_XW`、`I_XY_Z_W_eq_I_YZ_W_add_I_XZ_YW` 和 `cond_dpi`。`cond_dpi` 的 Lean 形状是：
 
-本文的经验核心使用受控 ReAct 智能体中的这些访问模式。它不使用转述式（paraphrase-based）或格式化的黑盒重放作为内部决策相关性的证据。
+```lean
+theorem cond_dpi
+    (P : FinitePMF (α × β × γ × δ))
+    (h : condMarkov P) :
+    I_XZ_W P ≤ I_YZ_W P
+```
 
-## 四、静态证书：通过未追踪信道容量的结构上界
+这个定理就是 QIF 动态证书的类型化核心：如果四元组解释为 `(Probe, State, Action, Trace)`，则条件 Markov 前提表达 `Probe -> State -> Action | Trace`；结论表达 probe-action 条件互信息不超过 state-action 条件互信息。
 
-静态证书从部署拓扑对 $\varepsilon_\text{state} = H(S_t \mid \tilde T_t)$ 给出上界。不在可见轨迹中但能影响 $S_t$ 的信息必须通过未记录信道传输。对这些信道在最坏情况下容量的有界化，即给出了隐藏状态熵的上界。
+重要的是，库没有把变量名写死在定理中。`cond_dpi` 是通用有限信息论定理；证书层只是在特定变量角色上实例化它。
 
-### 4.1 时间展开部署图与组件预算
+## 四、证书层：从信息论到 QIF API
 
-令 $G_t = (V_t, E_t)$ 为截至第 $t$ 步的部署时间展开有向无环图（DAG）。节点是状态更新、工具调用、内存读/写、消息；边是信息信道。三类对象：未记录源 $U_t$（检索结果、外部内存、未记录消息）、可见轨迹 $\tilde T_t$ 和有效状态 $S_t$。令 $\mathcal{C}_\text{unlogged}$ 为所有分隔 $U_t$ 与 $S_t$ 的可达边割集。
+证书层将信息论核心包装成论文中真正使用的接口。下表列出主要 theorem family 及其 proof boundary。
 
-一组边称为*软件正交*的，如果在以 $\tilde T_t$ 为条件的联合分布下，信道输出可因式分解：$p(\{y_e\}_{e \in E'} \mid \{x_e\}, \tilde T_t) = \prod_{e \in E'} p(y_e \mid x_e, \tilde T_t)$。当未记录信道使用独立的 API 调用或分离的内存区域时，这一条件成立（非正交情形的补救处理见附录~\ref{app:netinfo}）。
+| 证书角色 | Lean 声明 | 库内保证 | 外部前提 |
+|---|---|---|---|
+| 动态探针下界 | `prop2_dynamic_lb` | 由 `cond_dpi` 得出 `I(Probe; Action | Trace) <= I(State; Action | Trace)` | `condMarkov P` |
+| 确定性 probe | `prop2_dynamic_lb_deterministic_probe` | 从 `probe : State -> Trace -> Probe` 构造 PMF 并自动证明 `condMarkov` | probe 必须确为状态和轨迹的确定性读出 |
+| 多 probe 聚合 | `aggregated_dynamic_lb` | max 聚合保持下界方向 | 每个 probe 分布分别满足前提 |
+| 迹缺口分解 | `static_decomposition` | 精确等式 `H(S | T_tilde) = H(S | T_full) + I(S; M | T_tilde)` | 有限 `(State, VisibleTrace, MissingTrace)` PMF |
+| 静态 cut 上界 | `prop1_static_ub` | 若缺失迹信息流受 `C_cut` 约束，则状态熵受上界约束 | `I(S; M | T_tilde) <= C_cut Ω` |
+| cut-set 抽取 | `cut_set_dpi_bound`、`abstract_cut_set_bound`、`prop1_static_ub_from_cut` | 把 cut 变量 DPI 与容量证书组合 | cut 变量提取、`condMarkov` 和容量上界 |
+| 容量/量化边界 | `capacity_le_of_kkt`、`quantized_vector_entropy_bound` | KKT 证书或有限量化向量给出信息上界 | KKT 字段或量化方案由调用者提供 |
 
-*引理（加性分解）*：在软件正交性且每条边具有预算 $c_e$ 的条件下，诱导割容量可分解为：$C_\text{cut}(\Omega) \leq \sum_{e \in E(\Omega, \Omega^c)} c_e$。
+这张表体现了本文的基本工程原则：Lean 定理负责保持不等式方向、边缘化定义、条件化对象和 max 聚合不会出错；部署者负责证明自己的变量确实满足接口前提。
 
-当软件正交性不成立时（例如两条未记录信道共享一个隐藏状态变量），每条边的求和 $\sum_{e \in E(\Omega, \Omega^c)} c_e$ 仍然通过跨耦合信道的互信息次可加性构成 $C_\text{cut}(\Omega)$ 的上界：$I(X_\Omega; Y_{\Omega^c} \mid \tilde T_t, X_{\Omega^c}) \leq \sum_e I(X_e; Y_e \mid \tilde T_t) \leq \sum_e c_e$。正交性是加性分解*紧致性*的要求，而非上界有效性的要求（形式化处理见附录~\ref{app:netinfo}）。
+### 4.1 动态证书
 
-每条边的预算 $c_e$ 从接口规格中读取：对词汇表 $\mathcal{V}$ 上 $K$ 令牌的文本信道为 $K \log |\mathcal{V}|$，对 $d$ 维量化状态为 $d \log Q$，对离散调度器为 $\log |\Omega_\text{states}|$。离散化参数 $Q$ 是审计者的可选参数（本文使用 $Q=256$，即 8 位审计离散化）；更紧或更粗的离散化按比例移动边界而不改变结构论断。所有边预算均为最坏情况（最大熵）预算；更紧的经验预算只会改善证书。
+动态证书的目标量是：
 
-该边界包含三个部分。$\varepsilon_\text{nominal}$ 项是即使在完整内部轨迹下仍然存在的残差不确定性；对于一个完全检测化的软件智能体，此项通常为零。割项是为仍可通过未记录接口进入 $S_t$ 的信息设置的审计预算。有向 MI 符号在形式上为最坏情况信息流定价，而实际实现的证书仅需边预算和部署图未记录部分上的最小割。
-
-*命题（基于割集界的静态证书）*：对于任何分隔 $U_t$ 与 $S_t$ 的割 $\Omega$，诱导容量为 $C_\text{cut}(\Omega) = \sup_{p(X_\Omega \mid \tilde T_t)} I(X_\Omega \to Y_{\Omega^c} \mid \tilde T_t, X_{\Omega^c})$，则有
 \[
-  H(S_t \mid \tilde T_t) \;\leq\; \underbrace{H(S_t \mid T_t)}_{\varepsilon_\text{nominal}} \;+\; \min_{\Omega} C_\text{cut}(\Omega).
+  \delta_\mathrm{act} = I(S; A \mid T).
 \]
-令 $\varepsilon_{\text{state}}^{\text{UB}} := \varepsilon_\text{nominal} + \min_\Omega C_\text{cut}(\Omega)$，则 $\varepsilon_\text{state} \leq \varepsilon_{\text{state}}^{\text{UB}}$。
 
-这里 $X_\Omega$ 表示进入跨越割的边的输入信号，$Y_{\Omega^c}$ 表示相应的输出信号，$X_{\Omega^c}$ 表示接收端的边界状态（形式化定义见附录~\ref{app:netinfo}）。
+如果审计者只能读取一个 probe `X`，则需要证明在给定 `T` 下 `X` 对 `A` 的影响只通过 `S`。在 Lean 中，这不是一句自然语言假设，而是 `condMarkov P`。`prop2_dynamic_lb` 直接把它变成下界：
 
-*推论（加性形式）*：在软件正交性下，$\varepsilon_{\text{state}}^{\text{UB}} = \varepsilon_\text{nominal} + \min_{C \in \mathcal{C}_\text{unlogged}} \sum_{e \in C} c_e$，即未记录子图上的离散最小割。
-
-*证明概要：* 链式法则给出 $H(S_t \mid \tilde T_t) = H(S_t \mid T_t) + I(S_t; M_t \mid \tilde T_t)$，其中 $M_t = T_t \setminus \tilde T_t$。从 $U_t$ 到 $S_t$ 的每条路径均跨越某个割 $\Omega$，因此 $M_t$ 被跨割信号 $d$-分离于 $S_t$；DPI 给出 $I(S_t; M_t \mid \tilde T_t) \leq C_\text{cut}(\Omega)$。对割取最小化并代入引理即完成证明（完整推导见附录~\ref{app:netinfo}）。
-
-*推论（自回归零割）*：如果系统是一个严格的自回归核心且 $\tilde T_t$ 包含完整的上下文窗口，则 $\mathcal{C}_\text{unlogged} = \varnothing$，每个割的诱导容量为零，且 $\varepsilon_{\text{state}}^{\text{UB}} = 0$。
-
-## 五、动态证书：通过条件 DPI 的决策相关性
-
-动态证书针对 $\delta_\text{act} := I(S_t; A_t \mid \tilde T_t)$。由于 $S_t$ 不可观测，我们指定其测量变量在给定 $\tilde T_t$ 下满足 $X_t \to S_t \to A_t$ 的探针。条件 DPI 提供正确性论证：$I(X_t; A_t \mid \tilde T_t) \leq \delta_\text{act}$。
-
-*命题（基于条件 DPI 的探针证书）*：对于任何在给定 $\tilde T_t$ 下满足 $X_t \to S_t \to A_t$ 的可容许探针变量 $X_t$，探针测量 $I(X_t; A_t \mid \tilde T_t)$ 是 $\delta_\text{act}$ 的一个有效下界证书。
-
-**重放证书。** 令 $R_t \in \{\text{wild}, \text{replay}\}$ 表示一个缺失状态片段是否在同一条可见轨迹 $\tilde T_t$ 下被重建（受控重新执行，而非转述变化）。则 $I(R_t; A_t \mid \tilde T_t) = \mathrm{JS}(P_\text{wild}, P_\text{replay} \mid \tilde T_t) \leq \delta_\text{act}$。离散行动空间允许对已实现行动或模型报告的行动概率进行直接的经验 JS 估计；下文实验会说明使用哪种方法。
-
-**干预证书。** 令 $\xi_\text{hidden}$ 为对可疑未记录模块（缓存、内存缓冲区、草稿板）的外生扰动。如果在给定 $\tilde T_t$ 下满足 $\xi_\text{hidden} \to S_t \to A_t$，则 $I(\xi_\text{hidden}; A_t \mid \tilde T_t) \leq \delta_\text{act}$。离散行动空间允许直接的条件行动分布偏移估计（如 JS 散度）；对于连续行动空间，可使用 InfoNCE 或 MINE。需要灰盒扰动访问，是三种探针中最直接的因果探针。
-
-**代理证书。** 令 $Z_t = f(S_t)$ 为有效状态的一个可读粗化（工具 logit 投影、注意力汇总）。由于在给定 $\tilde T_t$ 下 $Z_t \leftarrow S_t \to A_t$，条件 DPI 给出 $I(Z_t; A_t \mid \tilde T_t) \leq \delta_\text{act}$。我们通过拟合预测器 $p(A_t \mid \tilde T_t)$ 和 $p(A_t \mid \tilde T_t, Z_t)$ 并取其交叉熵缺口来估计该量，记为 $\hat I(Z_t; A_t \mid \tilde T_t)$。
-
-**聚合。** 单个证书类别可能遗漏某些因果路径。定义 $\delta_{\text{act}}^{\text{LB}} := \max\{ I(R_t; A_t \mid \tilde T_t), I(\xi_\text{hidden}; A_t \mid \tilde T_t), I(Z_t; A_t \mid \tilde T_t) \}$。由最大值的单调性，聚合结果仍然是 $\delta_\text{act}$ 的一个有效下界。
-
-**激活剖面。** 标量证书是可容许探针索引族的最大值。保留索引即得到一个*激活剖面*
 \[
-  \Delta(j) := I(X_t^{(j)}; A_t \mid \tilde T_t),
+  I(X; A \mid T) \le I(S; A \mid T).
 \]
-其中 $j$ 可表示草稿板字段、去噪步骤、激活层或通信边。静态证书标识残差容量可能所在的位置；激活剖面标识这些容量在何处被行为性地使用。下文的实验保持这一代数结构不变，仅改变索引：ReAct 中为模块，扩散 LM 中为时间步，多智能体设置中为通信边。
 
-## 六、经验诊断
+经验 probe 最容易出错的地方是把“读到了某个变量”误写成“该变量是可容许下界”。库提供一个保守入口：如果 probe 是 `State` 和 `Trace` 的确定性读出，`condMarkov_deterministicProbePMF` 会在 Lean 中构造四变量 PMF 并证明 Markov 方程。更复杂的随机 probe、干预 probe 或 replay probe 可以使用同一接口，但必须显式给出相应的条件 Markov 前提。
 
-实验从一个标量日志消融开始，然后追问动态信号出现在何处。静态消融（§\ref{sec:exp-static}）使用推论~\ref{cor:additive-ub} 从拓扑计算残差位预算。ReAct 干预和受控重放（§\ref{sec:exp-intervention}）表明同一未记录草稿板容量在计算器任务上休眠、在规划任务上活跃。§\ref{sec:diffusion-dynamic} 中的 LLaDA 探针按去噪步骤索引 $\Delta(j)$；§\ref{sec:multi-agent-private-report} 中的多智能体探针按私人对等报告边索引它。只读代理和人工合成真实校准见附录~\ref{app:proxy-bias} 和~\ref{app:synthetic}。所有流程均在单个 M4 Max 工作站上设计运行。
+### 4.2 静态证书
 
-### 6.1 静态证书与日志消融
+静态证书的目标是约束可见轨迹无法恢复的状态熵：
 
-从 Qwen2.5-7B-Instruct ReAct 执行轨迹中提取时间展开 DAG，为每条未记录边分配预算 $c_e$（§\ref{sec:static-cert}）；未记录边上的最小割给出 $\varepsilon_{\text{state}}^{\text{UB}}$。日志记录的逐步加入将上界从 $16{,}464$ 位降至 $0$ 位。主导瓶颈是草稿板读取路径（$16{,}384$ 位）。同一静态计算也为后续扩散 LM 和多智能体动态检验提供了坐标系统。
+\[
+  H(S \mid \tilde T).
+\]
 
-### 6.2 动态因果证书：干预与受控重放
+库首先证明一个纯代数分解：
 
-在相同拓扑下分离休眠/活跃任务：未记录草稿板在两种情形下都存在，但对计算器任务无关，对规划任务则是必要的。干预扰动草稿板（掩码或替换）；受控重放在保持 $\tilde T_t$ 不变的情况下彻底移除它。干预手段显示：掩码 $0.7$ 条件下规划任务的 JS 散度为 $0.0215$ 位（95\% CI $[0.0094,0.0410]$），计算器任务为零。受控重放中规划任务上 JS 散度为 $0.0163$ 位（95\% CI $[0.0124,0.0208]$），计算器任务为零。
+\[
+  H(S \mid \tilde T)
+  =
+  H(S \mid T_\mathrm{full}) + I(S; M \mid \tilde T),
+\]
 
-在该固定拓扑下，未记录草稿板在两种任务划分中均对 $\varepsilon_{\text{state}}^{\text{UB}}$ 贡献 $16{,}384$ 位，与从提取的 ReAct DAG 得到的最小割一致。结构不可恢复性由部署边界和日志策略决定；残差决策相关性取决于任务使用的隐藏信道。
+其中 `M` 是缺失轨迹。这个等式由 `static_decomposition` 给出，不涉及部署图。随后，`prop1_static_ub` 说明：如果调用者提供 `I(S; M | T_tilde) <= C_cut Ω`，则得到状态熵上界。`CutSetBoundExtract` 再把 cut 变量、条件 DPI 和容量前提组合成更接近部署图的入口。
 
-### 6.3 扩散 LM 上的时间证书分析
+这一区分是 POPL 版本必须强调的：Lean 证明了分解和归约，但不会从任意工程系统中自动提取正确的 cut 变量，也不会凭空证明接口容量。容量可以由 `capacity_le_of_kkt` 或 `quantized_vector_entropy_bound` 等库定理支持，但具体建模仍是调用者义务。
 
-使用 LLaDA-8B-Instruct 在 $K=10$ 步去噪轨迹上，在步骤 $\{2,4,6,8,10\}$ 处对第 1 层激活施加高斯扰动（$\sigma{=}5.0$）。模式为「晚期绑定」（late-binding）：步骤 2--8 保持在低位（$0.001$--$0.006$ 位），而步骤 10 升至 $0.110$ 位（95\% CI $[0.052,0.234]$）。在证书几何中，LLaDA 在去噪全程携带隐藏容量；当去噪状态绑定到离散工具选择时，该容量变得与行动相关。
+## 五、图层：d-separation 的类型化边界
 
-### 6.4 多智能体私人报告干预
+QIF 证书经常依赖因果图或部署图。`CausalQIF` 的图层由三组模块组成：
 
-多智能体设置再次改变索引。控制者将证据收集委托给 Worker，Worker 的私人报告不是辅助草稿板，而是决策图中的认识论边。主要干预将 Worker 报告替换为来自相反任务类别的报告，同时保持控制者协议固定。对照条件包括中性重放、同类洗牌和 Oracle 标签。
+- `Graph/*`：有限 DAG、祖先关系和 moralization 辅助定义。
+- `DSeparation/*`：trail、Bayes-ball、d-separation graph 和查询域保护。
+- `Examples/*`：将图层、信息论层和证书层组合的最小部署例子。
 
-跨事实证据达到 $0.901$ 位（95\% CI $[0.873,0.928]$），接近 Oracle 上界 $1.000$ 位；同类洗牌仅为 $0.084$ 位。该对比是拓扑性的：在多智能体部署中，控制者的决策通过私人 Worker 报告路由，因此活跃位点是通信边本身。
+库中特别重要的结果不是“我们证明了所有 d-separation 事实”，而是“我们证明了受限查询域下的正确事实，并机器检查了错误泛化”。`dsep_complete_of_query` 要求 `DSeparationQuery X Y Z`，其中包含 pairwise-disjoint 约束。相反，`not_forall_dsep_complete` 证明不带该约束的全称命题为假。
 
-## 七、讨论
+这对论文写作很关键。很多纸面证明会把端点是否可被条件集包含当成小技术细节；在 Lean 中，它直接决定定理真假。当前库把标准查询域作为类型化 API 的一部分，而不是埋在证明脚注里。
 
-**一张图：先看容量，再看激活。**
+图到概率条件独立的桥接也被显式分层。`MarkovGenerator`、`GlobalMarkov` 和 `DSepCMIBridge` 提供公开接口，`UnsafeBridge.lean` 集中放置当前仍未完全闭合的 5 个 axiom：四个 graphoid 闭包律和一个 local-Markov-to-global-d-separation 桥。这让下游 theorem 可以被使用，但其依赖不会被误报为 closed theorem。
 
-实验是一次连续的递进。静态证书首先绘制隐藏容量可能位于何处：草稿板模块、去噪接口、对等状态边。动态证书随后追问这些位置中哪些影响了行动。在 ReAct 中，同一草稿板在计算器任务上休眠，在规划任务上活跃。在 LLaDA 中，残差容量贯穿去噪全程，但行动相关性集中在晚期绑定步骤。在多智能体部署中，委托使私人 Worker 报告成为活跃边。
+## 六、其他有限证书族
 
-因此，效应量排序是坐标上的激活剖面，而非探针间的矛盾。在该协议下，声称一个未观测变量因果性地影响行为，必须同时在 $\varepsilon_{\text{state}}^{\text{UB}}$ 中标识一个信道和在 $\delta_{\text{act}}^{\text{LB}}$ 中标识一个探针。
+除了双重证书，库还包含若干有限 QIF 中常见的辅助 theorem family。它们不是本文的叙事主线，但说明 `CausalQIF` 是一个库而非单点证明。
 
-## 致谢
+**可辨识性缺口。** `identifiability_gap_extremes` 证明：对任意有限 `(T, A)` 分布，只要状态类型足够大，就存在两个具有相同可观察 `(T, A)` 边缘分布的有限 PMF，一个满足 `I(S; A | T) = 0`，另一个达到 `H(A | T)`。这给“仅输出轨迹不能识别残差决策相关性”提供有限离散核心。
 
-我们感谢 Qwen2.5 和 LLaDA 的开发者为 ReAct 和扩散 LM 实验提供开源权重模型；感谢 GSM8K 和 HotpotQA 的创建者和维护者为多智能体设置提供基准数据；以及感谢 Hugging Face Transformers、PyTorch、NumPy、scikit-learn、NetworkX、Matplotlib、Lean 4、Lake 和 Mathlib 社区为实验、图表和形式化提供软件基础设施。所有计算在单台 Apple M4 Max 工作站上完成。
+**自回归 trace recoverability。** `no_entropic_eis_autoregressive` 表达一个 exact finite theorem：若状态由轨迹确定性恢复，则内生有限 Shannon witness 不可能有正的 `H(I | T)`。这不是连续近似命题，也不覆盖 epsilon-screenability；它是精确有限定理。
 
-## 参考文献
+**语义闭包和覆盖。** `semantic_factorization_iff` 把函数尊重语义等价关系与通过 quotient factorization 等价起来；`fcg_covering_bound` 和相关结果给出有限覆盖到格式信道缺口的界。
 
-[参考文献不做翻译，保持原文]
+**有限查询和几何不可能性。** `finite_query_decision_impossibility`、`finite_support_cannot_cover_separated_sequence`、`theorem3_pac_lower_bound` 等结果保留为证书库的扩展部分。它们有各自的建模前提，不应被合并成一个未经限定的总 theorem。
+
+## 七、库架构与构建边界
+
+当前公共入口是：
+
+```lean
+import CausalQIF
+```
+
+源码布局如下：
+
+```text
+lean/CausalQIF/
+  InfoTheory/       -- finite entropy, MI, CMI, KL, DPI
+  Certificates/     -- QIF certificate reductions and finite bounds
+  Graph/            -- finite DAG utilities
+  DSeparation/      -- trail, Bayes-ball, d-separation, bridge boundary
+  Examples/         -- typed deployment sanity checks
+  Experimental/     -- compatibility and pending bridge material
+```
+
+当前活动源码没有 `sorry` 或 `admit` 占位；剩余未闭合内容以 5 个 `axiom` 集中在 `DSeparation/UnsafeBridge.lean`。这种状态比简单写“mechanized in Lean”更具体：读者能看到哪些 theorem 是 closed proof，哪些 theorem 经由显式 assumption boundary。
+
+`THEOREM_INDEX.csv` 和 `docs/THEOREM_DEPENDENCIES.md` 是论文写作的约束文件。它们列出 theorem 名、文件位置、支持的 paper claim、假设和不声称内容。POPL 版本应该把这些表作为 artifact 叙事的一部分，而不是把 Lean 工件压缩成摘要末尾一句话。
+
+## 八、客户端用例：实验如何降级为库实例
+
+原先的智能体审计实验仍然有价值，但它们在 POPL 论文中的角色应改变。它们不是主论证，而是 `CausalQIF` 的客户端。
+
+**ReAct scratchpad。** 客户端把未记录 scratchpad 建模为 `MissingTrace` 或 cut channel，把工具选择建模为 `Action`，把 replay/intervention 读数建模为 `Probe`。库能检查的是：在调用者给出 `condMarkov` 或确定性 probe 构造后，probe-action 信息量是否具有下界意义；在调用者给出容量预算后，cut-set 上界是否以正确方向组合。
+
+**扩散 LM 去噪轨迹。** 客户端把去噪步骤索引为 probe family。不同时间步的数值差异可以形成 activation profile，但 Lean 只证明 profile 中每个分量在满足前提时是目标互信息的下界。
+
+**多智能体私人报告边。** 客户端把 Worker 的私人报告建模为通信边或 probe 变量。报告替换实验可以展示某条边在具体任务上 action-relevant，但该实验不能替代库中的 `cond_dpi` 或 cut-set theorem。
+
+原稿中出现的数值，例如 ReAct replay 的 `0.0163` 位、LLaDA 终步的 `0.110` 位、多智能体 report swap 的 `0.901` 位，可以保留在 artifact evaluation 或 case-study 小节中。但它们应被解释为“调用库接口后的客户端输出”，而不是摘要和引言的核心贡献。
+
+## 九、相关工作定位
+
+POPL 版本的相关工作应从形式化和程序语言角度组织，而不是以 agent audit 实验为中心。
+
+**量化信息流与信息论安全。** QIF 研究提供了用熵、互信息和信道容量描述泄露的传统。`CausalQIF` 的区别在于，它不只给出纸面公式，而是为有限 QIF 证书建立 Lean API，并把容量、Markov 和图结构前提显式化。
+
+**形式化概率和信息论。** 现有工作在 Coq、Isabelle、Lean 或其他证明助手中处理概率、测度和信息论。本文选择有限 PMF 片段，是为了服务部署证书和可执行 artifact，而不是追求测度论最大一般性。
+
+**因果图和 d-separation。** 因果图提供把结构假设转成条件独立的语言。`CausalQIF` 的贡献不是宣称图语义全闭合，而是给出 finite DAG 机制、合法查询域保护、反例和显式桥接账本。
+
+**AI agent auditing。** 智能体审计、probe、patching、representation engineering 和 causal tracing 提供客户端变量和实验协议。它们在本文中是应用来源，而不是形式化核心。
+
+## 十、局限性
+
+本文的有限边界是有意设计，但也限制了适用范围。
+
+第一，所有定理都是有限离散定理。连续激活、无限上下文、采样极限和估计一致性不在当前 Lean 核心内。
+
+第二，部署到 Lean 变量的映射由调用者承担。库可以检查一个给定 `FinitePMF` 和给定 `condMarkov` 前提推出什么，不能检查真实系统是否真的实现了该 PMF。
+
+第三，cut-set capacity 是证书前提而非自动发现结果。`capacity_le_of_kkt` 和 `quantized_vector_entropy_bound` 能帮助证明有限容量上界，但接口规格、量化方案和 graph extraction 仍在库外。
+
+第四，d-separation 到条件独立的完整桥接仍有显式 axiom boundary。库的价值在于把这条边界集中、命名并暴露给论文，而不是把它藏起来。
+
+## 十一、结论
+
+如果目标是 POPL，`CausalQIF` 的论文主角应是 Lean/typed finite QIF library。实验审计协议只能作为客户端实例。这样的改写使论文从“我们做了若干 agent 实验并附带 Lean 段落”变成“我们构建了一个可检查的有限 QIF 证明栈，并用 agent 实验展示它如何被调用”。
+
+核心 claim 也随之改变：本文不以某个具体模型的隐藏状态数值为主要发现，而以 proof boundary 的机械化为主要贡献。`CausalQIF` 告诉读者：动态证书何时由条件 DPI 保证，静态证书何时由迹缺口分解和 cut-set 前提保证，d-separation 何时可以被使用，以及哪些假设仍必须由部署者或后续理论工作承担。
 
 ## 术语对照表
 
 | 中文 | English | 备注 |
 |------|---------|------|
-| 双重证书 | dual certificate | 本文核心概念 |
-| 静态证书 | static certificate | $\varepsilon_{\text{state}}^{\text{UB}}$ |
-| 动态证书 | dynamic certificate | $\delta_{\text{act}}^{\text{LB}}$ |
-| 结构不可恢复性 | structural unrecoverability | |
-| 残差隐状态熵 | residual hidden-state entropy | |
-| 决策相关性 | decision relevance | |
-| 条件数据处理不等式 | conditional Data Processing Inequality (DPI) | |
-| 割集上界 | cut-set bound | 来自网络信息论 |
-| 软件正交性 | software orthogonality | |
-| 时间展开有向无环图 | time-unrolled DAG | |
-| 激活剖面 | activation profile | |
-| 受控重放 | controlled replay | |
-| 日志消融 | logging ablation | |
-| 自回归零割 | autoregressive zero-cut | |
-| 探针分类体系 | probe taxonomy | |
-| 晚期绑定 | late-binding | LLaDA 结果 |
-| 最小割 | min-cut | |
-| 隐藏信道 | hidden channel | |
+| 量化信息流 | quantitative information flow (QIF) | 本文核心领域 |
+| 有限 PMF | finite PMF | Lean 中的显式概率对象 |
+| 类型化证书 | typed certificate | 由变量类型区分状态、轨迹、探针等角色 |
+| 条件数据处理不等式 | conditional data processing inequality | `cond_dpi` |
+| 条件 Markov 前提 | conditional Markov premise | `condMarkov` |
+| 动态探针证书 | dynamic probe certificate | `prop2_dynamic_lb` |
+| 静态 cut-set 证书 | static cut-set certificate | `prop1_static_ub_from_cut` |
+| 迹缺口分解 | trace-gap decomposition | `static_decomposition` |
+| 查询域保护 | query-domain guard | `DSeparationQuery` |
+| 前提账本 | premise ledger | theorem dependencies and axiom boundary |
+| 工件客户端 | artifact client | 实验或案例对库接口的实例化 |
+| 显式 axiom boundary | explicit axiom boundary | 当前集中在 `UnsafeBridge.lean` |
