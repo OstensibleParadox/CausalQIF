@@ -1,3 +1,5 @@
+import CausalQIF.Certificates.StaticCutBound
+
 /-!
 # Additive Cut-Bound Certificates
 
@@ -5,8 +7,6 @@ Canonical declarations for additive cut-form entropy decomposition.
 
 Authors: (C) 2026 CausalQIF artifact contributors.
 -/
-
-import CausalQIF.Certificates.StaticCutBound
 
 namespace CausalQIF
 
@@ -33,6 +33,8 @@ theorem hidden_trace_entropy_le_sum_cut_capacities
     _ ≤ H_S_cond_Tfull P + C_edge_sum Ω := add_le_add (le_refl (H_S_cond_Tfull P)) h_ortho_bound
 
 end AdditiveCutCertificate
+
+end
 
 namespace Certificates
 

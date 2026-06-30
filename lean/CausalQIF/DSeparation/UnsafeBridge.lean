@@ -38,6 +38,7 @@ private def Reindex {S T : Finset ℕ}
     (a : AssignOn Var S) : AssignOn Var T :=
   fun i => a ⟨i.1, (h i.1).2 i.2⟩
 
+omit [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)] in
 private theorem reindex_inv
     {S T : Finset ℕ} (hST : ∀ n, n ∈ S ↔ n ∈ T)
     (a : AssignOn Var S) :
@@ -47,6 +48,7 @@ private theorem reindex_inv
   | mk n hn =>
       simp [Reindex]
 
+omit [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)] in
 private theorem reindex_restrict
     {S T U : Finset ℕ}
     (hST : ∀ n, n ∈ S ↔ n ∈ T)
@@ -55,6 +57,7 @@ private theorem reindex_restrict
     restrictAssign hTU (Reindex hST a) u = restrictAssign hSU a u := by
   simp [Reindex, restrictAssign]
 
+omit [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)] in
 private theorem reindex_restrictAssignment_eq
     {S T : Finset ℕ} (hST : ∀ n, n ∈ S ↔ n ∈ T)
     (hS : S ⊆ G.nodes) (hT : T ⊆ G.nodes)
@@ -66,6 +69,7 @@ private theorem reindex_restrictAssignment_eq
   | mk n hn =>
       simp [Reindex, restrictAssign, restrictAssignment]
 
+omit [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)] in
 private theorem restrict_assign_eq_iff
     {S T : Finset ℕ} (hST : ∀ n, n ∈ S ↔ n ∈ T)
     (hS : S ⊆ G.nodes) (hT : T ⊆ G.nodes)
@@ -82,7 +86,7 @@ private theorem restrict_assign_eq_iff
     calc
       restrictAssignment (G := G) hS a =
           Reindex (fun n => (hST n).symm) (restrictAssignment (G := G) hT a) := by
-            simpa [h2]
+            exact h2.symm
       _ = Reindex (fun n => (hST n).symm) (Reindex hST s) := by simpa using h1
       _ = s := reindex_inv (S := S) (T := T) hST s
   · intro h
@@ -94,7 +98,7 @@ private theorem restrict_assign_eq_iff
           (hST := fun n => (hST n).symm) (hS := hT) (hT := hS) a)
     calc
       restrictAssignment (G := G) hT a = Reindex hST (restrictAssignment (G := G) hS a) := h2.symm
-      _ = Reindex hST s := by simpa [h]
+      _ = Reindex hST s := h1
 
 /-!
 Audit bridge for unclosed assumptions in the d-separation ↔ CI layer.
@@ -157,6 +161,7 @@ private lemma subset_Z_of_YZ (Y Z : Finset ℕ) :
   simp only [mem_union]
   tauto
 
+omit [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)] in
 private theorem restrictAssign_comp
     {S T U : Finset ℕ} (hST : S ⊆ T) (hTU : T ⊆ U)
     (hSU : S ⊆ U) (a : AssignOn Var U) :
@@ -164,6 +169,7 @@ private theorem restrictAssign_comp
   ext i
   rfl
 
+omit [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)] in
 private theorem restrictAssignment_comp
     {S T : Finset ℕ} (hST : S ⊆ T)
     (hT : T ⊆ G.nodes) (hS : S ⊆ G.nodes)
@@ -360,6 +366,7 @@ private theorem contextRestrictedSum_expand_by_indicator
             P.pmf a * (ψ a * (if r a = x then 1 else 0))
           else 0) := rfl
 
+omit [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)] in
 private theorem restrict_XZ_then_Z_eq_restrict_XYZ_then_Z
     (X Y Z : Finset ℕ) (xyz : AssignOn Var (X ∪ Y ∪ Z)) :
     restrictAssign (subset_Z_of_XZ X Z)
@@ -371,6 +378,7 @@ private theorem restrict_XZ_then_Z_eq_restrict_XYZ_then_Z
     (hSU := subset_Z_of_XYZ X Y Z)
     xyz
 
+omit [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)] in
 private theorem restrict_YZ_then_Z_eq_restrict_XYZ_then_Z
     (X Y Z : Finset ℕ) (xyz : AssignOn Var (X ∪ Y ∪ Z)) :
     restrictAssign (subset_Z_of_YZ Y Z)
@@ -1776,7 +1784,7 @@ theorem contextMass_pos_of_strictlyPositive
       intro ω _
       exact hall_zero ω
     have hzero : (1 : ℝ) = 0 := by
-      simpa [FinitePMF.sum_one] using hsum
+      simp [FinitePMF.sum_one] at hsum
     norm_num at hzero
   let a0 : Assignment G Var := Classical.choose hne
   let a : Assignment G Var := fun v => if hv : v.1 ∈ S then s ⟨v.1, hv⟩ else a0 ⟨v.1, v.2⟩
@@ -1948,6 +1956,7 @@ private theorem contextRestrictedSum_indicator_YZ_eq_if_marginalMass
       · simp [hctx]
     simp [hzy, hzero]
 
+omit [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)] in
 private theorem restrictAssignment_XYZ_eq_iff_XZ_YZ
     (X Y Z : Finset ℕ) (hnodes : X ∪ Y ∪ Z ⊆ G.nodes)
     (a : Assignment G Var) (xyz : AssignOn Var (X ∪ Y ∪ Z)) :
@@ -1994,6 +2003,7 @@ private theorem restrictAssignment_XYZ_eq_iff_XZ_YZ
         have hval := congrFun hXZ ⟨n, by simp [hnZ]⟩
         simpa [restrictAssignment, restrictAssign] using hval
 
+omit [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)] in
 private theorem assign_XYZ_ext_of_XZ_YZ
     (X Y Z : Finset ℕ)
     {u v : AssignOn Var (X ∪ Y ∪ Z)}
@@ -2303,7 +2313,7 @@ private theorem compatible_YZ_sum_eq_context_of_CIAlg
     have hv_xz : xzOf v = xz := by
       simpa [fiber] using hv
     apply assign_XYZ_ext_of_XZ_YZ (Var := Var) X Y Z
-    · simpa [xzOf, hu_xz, hv_xz]
+    · simp [xzOf, hu_xz, hv_xz]
     · simpa [yzOf] using huv
   have hsumImage :
       (∑ yz ∈ image, mYZ yz) = ∑ xyz ∈ fiber, mYZ (yzOf xyz) := by
@@ -2895,7 +2905,7 @@ theorem ci_symm (P : FinitePMF (Assignment G Var)) {X Y Z : Finset ℕ} :
   refine ⟨hnodes', ?_⟩
   let hswapYX : ∀ n, n ∈ Y ∪ X ∪ Z ↔ n ∈ X ∪ Y ∪ Z := by
     intro n
-    simp [Finset.union_assoc, Finset.union_left_comm, Finset.union_comm]
+    simp [Finset.union_left_comm, Finset.union_comm]
   intro xyz'
   let xyz : AssignOn Var (X ∪ Y ∪ Z) := Reindex hswapYX xyz'
   have h1 := hXY xyz

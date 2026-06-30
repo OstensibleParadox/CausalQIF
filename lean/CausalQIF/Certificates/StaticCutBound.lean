@@ -263,6 +263,8 @@ theorem hidden_trace_entropy_le_cut_capacity
 
 end StaticCertificate
 
+end
+
 namespace Certificates
 
 export CausalQIF (

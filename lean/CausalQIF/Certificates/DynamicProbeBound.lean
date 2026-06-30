@@ -220,6 +220,8 @@ theorem max_probe_action_cmi_of_deterministic_probes
 
 end DynamicCertificate
 
+end
+
 namespace Certificates
 
 export CausalQIF (

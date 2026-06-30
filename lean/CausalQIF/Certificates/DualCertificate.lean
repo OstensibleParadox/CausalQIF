@@ -2,7 +2,7 @@ import CausalQIF.Certificates.DynamicProbeBound
 import CausalQIF.Certificates.StaticCutBound
 import CausalQIF.Certificates.AdditiveCutBound
 
-/--!
+/-!
 Compatibility layer for legacy theorem names.
 
 This module now only keeps deprecated aliases to preserve API stability while
