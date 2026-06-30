@@ -237,8 +237,8 @@ theorem prop1_static_ub_from_cut
     (h_markov : condMarkov (pmf_from_vars P Ω_vars))
     (h_cap : I_YZ_W (pmf_from_vars P Ω_vars) ≤ C_cut_Ω) :
     H_S_cond_Ttilde P ≤ H_S_cond_Tfull P + C_cut_Ω := by
-  -- 使用 DualCertificate.lean 中的 prop1_static_ub
-  apply prop1_static_ub Unit (fun _ => C_cut_Ω) () P
+  -- 使用 DualCertificate.lean 中的 hidden_trace_entropy_le_cut_capacity
+  apply hidden_trace_entropy_le_cut_capacity Unit (fun _ => C_cut_Ω) () P
   exact abstract_cut_set_bound P Ω_vars C_cut_Ω h_markov h_cap
 
 end

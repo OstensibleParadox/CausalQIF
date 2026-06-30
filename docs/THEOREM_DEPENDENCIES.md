@@ -6,19 +6,12 @@ This map tracks the active dependency structure in the canonical `lean/CausalQIF
 
 - `lean/CausalQIF.lean`
   - imports `CausalQIF.Certificates.Tools`
-  - imports `CausalQIF.Certificates.CMI_Nonneg`
-  - imports `CausalQIF.InfoTheory` (grouped)
-  - imports `CausalQIF.Certificates.CutSetBoundExtract`
-  - imports `CausalQIF.Certificates.TraceRecoverability` / `TraceRecoverabilityBridge`
-  - imports `CausalQIF.Certificates.EntropicEIS`
-  - imports `CausalQIF.Certificates.DualCertificate`
-  - imports `CausalQIF.Certificates` family modules
-  - imports `CausalQIF.DSeparation.DAGParser`
-  - imports `CausalQIF.DSeparation.MarkovGenerator`
-  - imports `CausalQIF.DSeparation.DSepCMIBridge`
-  - imports `CausalQIF.Experimental.InfoTheoryBridge`
-  - imports `CausalQIF.Experimental.FiniteQueryAudit`
-  - imports `CausalQIF.Examples.CaseStudy`
+  - imports canonical graph, finite information, certificates, and paper-facing layers
+  - imports `CausalQIF.Graph.MarkovBridge`
+  - imports certificate families used by the artifact
+    (`IdentifiabilityGap`, `DynamicProbeBound`, `StaticCutBound`, `PACLowerBound`, and support modules)
+  - imports `CausalQIF.Examples.LinearChain`
+  - imports `CausalQIF.Paper.MainTheorems`
 
 ## Graph layer
 
@@ -26,13 +19,14 @@ This map tracks the active dependency structure in the canonical `lean/CausalQIF
   - provides finite DAG structures, ancestry helpers, and moralization
   - consumed by `CausalQIF.DSeparation`
 
-- `DSeparation/*`
+- `DSeparation/*` (legacy-compatible bridge split)
   - provides trail/active-path graph-search lemmas, trail blocking, and bridge lemmas to probabilistic assumptions
   - consumed by `Certificates` and higher-level certificate modules
   - dependencies: `Graph`, `Finset`, and `Mathlib` combinatorics
   - bridge split:
-    `MarkovGenerator` → `GlobalMarkov` → `UnsafeBridge`, so the unresolved bridge
-    assumptions are now collected in one explicit lower layer.
+    `MarkovGenerator` → `GlobalMarkov` → `UnsafeBridge`, and compatibility
+    wrappers are re-exported through `DSeparation.DSepCMIBridge` and
+    `Graph.MarkovBridge`.
 
 ## Information theory layer
 
@@ -56,10 +50,11 @@ This map tracks the active dependency structure in the canonical `lean/CausalQIF
 
 ## Boundaries / excluded modules
 
-The imported `Experimental/InfoTheoryBridge` is the explicit pending finite-to-probabilistic bridge.
-It is included at root for compatibility and API continuity, but it does not currently close
-the generic global `d-sep ⇒ CI` theorem.
-- `Experimental/FiniteQueryAudit` is historical bridge logic retained for audit traceability only.
+`Experimental/InfoTheoryBridge` and `Experimental/FiniteQueryAudit` are retained for
+compatibility and traceability and are **not** imported by `lean/CausalQIF.lean`.
+Their compatibility theorems are intentionally preserved for historical API
+consumers while canonical paper-facing bridges live in `Graph.MarkovBridge` and
+`Paper.Compatibility`.
 - `Certificates/PredictabilityRouteImpossibility` is a legacy off-root compatibility
   module for the old predictability surrogate. It is not imported by `lean/CausalQIF.lean`
   and is not the paper-facing EIS theorem.
@@ -114,6 +109,7 @@ They are **reductions**, not closed obligations; paper statements must surface t
 Scope notes:
 - d-separation: soundness proven only under pairwise-disjoint `X/Y/Z`; the unrestricted
   biconditional is proven **false** (`dsep_complete_endpoint_in_Z_counterexample`). General
-  probabilistic `d-sep ⇒ CI` is deferred to `Experimental/InfoTheoryBridge` (imported for compatibility; theorem is not closed by the current core assumptions).
+  probabilistic `d-sep ⇒ CI` is exposed through `Graph.MarkovBridge` compatibility
+  shims and is not discharged in the current core assumptions.
 - `Certificates/ChannelCapacity` is a **KKT upper-bound certificate checker**
   (`capacity_le_of_kkt`), not a channel capacity (no sup over input distributions).

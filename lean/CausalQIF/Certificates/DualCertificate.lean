@@ -30,7 +30,7 @@ Gap-closer for Theorem~1: if X_t is a probe variable satisfying the conditional
 Markov chain X_t → S_t → A_t given T_tilde_t, then its conditional MI with A_t
 lower-bounds delta_act, ruling out the P₀ (Dirac) realization.
 -/
-theorem prop2_dynamic_lb (P : FinitePMF (Probe × State × Action × Trace))
+theorem probe_action_cmi_le_state_action_cmi_of_condMarkov (P : FinitePMF (Probe × State × Action × Trace))
     (h_markov : condMarkov P) :
     I_XZ_W P ≤ delta_act P := by
   exact cond_dpi P h_markov
@@ -162,12 +162,12 @@ Dynamic lower bound with the Markov premise discharged by construction.
 For a deterministic probe readout of `(State, Trace)`, the certified probe
 information lower-bounds residual decision relevance.
 -/
-theorem prop2_dynamic_lb_deterministic_probe
+theorem probe_action_cmi_le_state_action_cmi_of_deterministicProbe
     (Q : FinitePMF (State × Action × Trace))
     (probe : State → Trace → Probe) :
     I_XZ_W (deterministicProbePMF Q probe) ≤
       delta_act (deterministicProbePMF Q probe) :=
-  prop2_dynamic_lb (deterministicProbePMF Q probe)
+  probe_action_cmi_le_state_action_cmi_of_condMarkov (deterministicProbePMF Q probe)
     (condMarkov_deterministicProbePMF Q probe)
 
 /--
@@ -175,7 +175,7 @@ Aggregated Dynamic Certificate.
 Taking the maximum of several valid probe classes (e.g., replay, intervention, proxy)
 yields a valid lower bound.
 -/
-theorem aggregated_dynamic_lb
+theorem max_probe_action_cmi_le_state_action_cmi_of_markov_probes
     (P_replay : FinitePMF (Probe × State × Action × Trace))
     (P_interv : FinitePMF (Probe × State × Action × Trace))
     (P_proxy : FinitePMF (Probe × State × Action × Trace))
@@ -186,9 +186,9 @@ theorem aggregated_dynamic_lb
         (max (I_XZ_W P_interv) (I_XZ_W P_proxy)) ≤
     max (delta_act P_replay)
         (max (delta_act P_interv) (delta_act P_proxy)) := by
-  have hb1 := prop2_dynamic_lb P_replay h1
-  have hb2 := prop2_dynamic_lb P_interv h2
-  have hb3 := prop2_dynamic_lb P_proxy h3
+  have hb1 := probe_action_cmi_le_state_action_cmi_of_condMarkov P_replay h1
+  have hb2 := probe_action_cmi_le_state_action_cmi_of_condMarkov P_interv h2
+  have hb3 := probe_action_cmi_le_state_action_cmi_of_condMarkov P_proxy h3
   apply max_le
   · exact hb1.trans (le_max_left _ _)
   · apply max_le
@@ -201,7 +201,7 @@ For a set of deterministic probe readouts of `(State, Trace)`, the aggregated ce
 information lower-bounds the aggregated residual decision relevance, without needing
 external `condMarkov` hypotheses.
 -/
-theorem aggregated_dynamic_lb_deterministic_probes
+theorem max_probe_action_cmi_of_deterministic_probes
     (Q : FinitePMF (State × Action × Trace))
     (probe_replay : State → Trace → Probe)
     (probe_interv : State → Trace → Probe)
@@ -212,13 +212,25 @@ theorem aggregated_dynamic_lb_deterministic_probes
     max (delta_act (deterministicProbePMF Q probe_replay))
         (max (delta_act (deterministicProbePMF Q probe_interv))
              (delta_act (deterministicProbePMF Q probe_proxy))) :=
-  aggregated_dynamic_lb
+  max_probe_action_cmi_le_state_action_cmi_of_markov_probes
     (deterministicProbePMF Q probe_replay)
     (deterministicProbePMF Q probe_interv)
     (deterministicProbePMF Q probe_proxy)
     (condMarkov_deterministicProbePMF Q probe_replay)
     (condMarkov_deterministicProbePMF Q probe_interv)
     (condMarkov_deterministicProbePMF Q probe_proxy)
+
+@[deprecated probe_action_cmi_le_state_action_cmi_of_condMarkov (since := "2026-06-30")] 
+alias prop2_dynamic_lb := probe_action_cmi_le_state_action_cmi_of_condMarkov
+
+@[deprecated probe_action_cmi_le_state_action_cmi_of_deterministicProbe (since := "2026-06-30")] 
+alias prop2_dynamic_lb_deterministic_probe := probe_action_cmi_le_state_action_cmi_of_deterministicProbe
+
+@[deprecated max_probe_action_cmi_le_state_action_cmi_of_markov_probes (since := "2026-06-30")] 
+alias aggregated_dynamic_lb := max_probe_action_cmi_le_state_action_cmi_of_markov_probes
+
+@[deprecated max_probe_action_cmi_of_deterministic_probes (since := "2026-06-30")] 
+alias aggregated_dynamic_lb_deterministic_probes := max_probe_action_cmi_of_deterministic_probes
 
 end DynamicCertificate
 
@@ -434,8 +446,8 @@ lemma H_M_le_log_card_M
 
 /-- Auxiliary cardinality corollary: the static state-entropy gap is bounded by
     the entropy, hence log-cardinality, of the missing trace. This does not replace
-    the cut-set premise in `prop1_static_ub`; it is a coarse finite-support bound. -/
-theorem prop1_static_ub_bounded
+    the cut-set premise in `hidden_trace_entropy_le_cut_capacity`; it is a coarse finite-support bound. -/
+theorem hidden_trace_entropy_le_entropic_cap
     (P : FinitePMF (State × VisibleTrace × MissingTrace)) :
     H_S_cond_Ttilde P ≤ H_S_cond_Tfull P + (Real.log (Fintype.card MissingTrace : ℝ) / Real.log 2) := by
   have h_chain := static_decomposition P
@@ -461,7 +473,7 @@ Gap-closer for Theorem~1: under structural access with full logging,
 The premise `h_bound` is the explicit external cut-set/information-flow
 assumption for this structural reduction.
 -/
-theorem prop1_static_ub
+theorem hidden_trace_entropy_le_cut_capacity
     (Cut : Type) (C_cut : Cut → ℝ)
     (Ω : Cut)
     (P : FinitePMF (State × VisibleTrace × MissingTrace))
@@ -472,18 +484,27 @@ theorem prop1_static_ub
   exact add_le_add (le_refl (H_S_cond_Tfull P)) h_bound
 
 /-- Edge-additive form (Corollary) -/
-theorem corollary_additive_ub
+theorem hidden_trace_entropy_le_sum_cut_capacities
     (Cut : Type) (C_cut : Cut → ℝ) (C_edge_sum : Cut → ℝ) (Cuts_U_to_S : Set Cut)
     (Ω : Cut) (hΩ : Ω ∈ Cuts_U_to_S)
     (P : FinitePMF (State × VisibleTrace × MissingTrace))
     (h_bound : I_S_M_cond_Ttilde P ≤ C_cut Ω)
     (h_ortho : software_orthogonal Cut C_cut C_edge_sum Cuts_U_to_S) :
     H_S_cond_Ttilde P ≤ H_S_cond_Tfull P + C_edge_sum Ω := by
-  have h_prop1 := prop1_static_ub Cut C_cut Ω P h_bound
+  have h_prop1 := hidden_trace_entropy_le_cut_capacity Cut C_cut Ω P h_bound
   have h_ortho_bound : C_cut Ω ≤ C_edge_sum Ω := h_ortho Ω hΩ
   calc
     H_S_cond_Ttilde P ≤ H_S_cond_Tfull P + C_cut Ω := h_prop1
     _ ≤ H_S_cond_Tfull P + C_edge_sum Ω := add_le_add (le_refl (H_S_cond_Tfull P)) h_ortho_bound
+
+@[deprecated hidden_trace_entropy_le_cut_capacity (since := "2026-06-30")] 
+alias prop1_static_ub := hidden_trace_entropy_le_cut_capacity
+
+@[deprecated hidden_trace_entropy_le_entropic_cap (since := "2026-06-30")] 
+alias prop1_static_ub_bounded := hidden_trace_entropy_le_entropic_cap
+
+@[deprecated hidden_trace_entropy_le_sum_cut_capacities (since := "2026-06-30")] 
+alias corollary_additive_ub := hidden_trace_entropy_le_sum_cut_capacities
 
 end StaticCertificate
 

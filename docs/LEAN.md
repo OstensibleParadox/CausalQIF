@@ -14,12 +14,14 @@ lean/
   lean-toolchain
   CausalQIF.lean           # default root import (compatibility root)
   CausalQIF/
+    Paper/
     Certificates/
-    DSeparation/
-    Experimental/
-    Graph/
-    InfoTheory/
     Examples/
+    Finite/
+    Graph/
+    Experimental/
+    InfoTheory/
+    DSeparation/
 ```
 
 ## Package identity
@@ -29,7 +31,15 @@ lean/
 - Default import root: `CausalQIF`
 - Public namespace: `CausalQIF`
 
-`lean/CausalQIF.lean` is the active default entrypoint and imports the compatibility experimental modules listed below.
+`lean/CausalQIF.lean` is the active default entrypoint and imports the canonical
+core plus paper-facing wrappers:
+
+- `Finite` core modules (`PMF`, `Entropy`, `ConditionalMutualInfo`)
+- `Graph` core modules (`PositiveModel`, `Trail`, `DSeparation`, `MarkovBridge`)
+- `Certificates` canonical families (`IdentifiabilityGap`, `DynamicProbeBound`,
+  `StaticCutBound`, `PACLowerBound`, plus supporting certificate utilities)
+- `Examples.LinearChain` (compatibility-anchored case study)
+- `Paper.MainTheorems` (human-facing theorem aliases and bridge compatibility exports)
 
 ## Current active theorem stack
 
@@ -37,26 +47,30 @@ lean/
    `Graph` and `DSeparation` define finite DAG objects, trail/active-path search,
    and reachability composition.
 2. Information theory:
-   `InfoTheory` proves finite-PMF identities for entropy, mutual information, and DPI-like lemmas.
+   `Finite`-layer and `InfoTheory` core modules prove finite-PMF identities for
+   entropy, mutual information, and DPI-like lemmas.
 3. Certificates:
    `Certificates` combines cut-set extraction, impossibility, and finite upper-bound statements.
 4. Examples:
    `Examples.CaseStudy` provides sanity checks on minimal typed deployments.
+5. Paper layer:
+   `Paper.MainTheorems` and `Paper.POPL2027` provide paper-facing theorem names.
 
-The `DSeparation` entry includes the explicit bridge split:
+The `Graph` entry includes the explicit bridge split:
 
-- `DSeparation.MarkovGenerator`: public CI/Markov APIs and projection helpers.
-- `DSeparation.GlobalMarkov`: auditable intermediate for the global Markov bridge.
-- `DSeparation.DSepCMIBridge`: compatibility re-exports for downstream certificate code.
+- `Graph.PositiveModel`: public CI/Markov APIs and projection helpers.
+- `Graph.MarkovBridge`: canonical d-separation to conditional-independence bridge for downstream code.
+- `DSeparation.DSepCMIBridge`: legacy compatibility layer imported by legacy shells.
 
 ## Experimental boundary
 
-Pending bridge obligations are kept under:
+Pending or historical compatibility wrappers are kept under:
 
 - `lean/CausalQIF/Experimental/InfoTheoryBridge.lean`
 - `lean/CausalQIF/Experimental/FiniteQueryAudit.lean`
 
-`InfoTheoryBridge` is kept imported in the root for API compatibility but currently provides a compatibility boundary, not a closed bridge from DAG to generic finite-model conditional independence.
+`InfoTheoryBridge` now provides only the legacy `dSeparation_implies_conditional_independence`
+compatibility theorem and is no longer imported by the default root.
 `FiniteQueryAudit` is retained as historical bridge logic and is not paper-facing.
 
 `MarkovGenerator` and `DSepCMIBridge` now keep stable public APIs but no longer

@@ -94,7 +94,7 @@ lemma entropy_sum_image (φ : A → S) (hφ_inj : Function.Injective φ)
 
 /-! ### Theorem 1 -/
 
-theorem identifiability_gap_extremes
+theorem exists_same_observable_with_cmi_eq_zero_and_cmi_eq_entropy
     (Q : FinitePMF (T × A))
     (s0 : S)
     (h_card : Fintype.card A ≤ Fintype.card S) :
@@ -320,6 +320,9 @@ by
       _ = H_A_cond_T Q := rfl
 
   exact ⟨P0, P1, h_marg0, h_marg1, h_I0, h_I1⟩
+
+@[deprecated exists_same_observable_with_cmi_eq_zero_and_cmi_eq_entropy (since := "2026-06-30")]
+alias identifiability_gap_extremes := exists_same_observable_with_cmi_eq_zero_and_cmi_eq_entropy
 
 end
 

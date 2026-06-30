@@ -13,10 +13,12 @@ CausalQIF/
     lean-toolchain
     CausalQIF.lean        # default entry module
     CausalQIF/
+      Finite/
       Graph/
       DSeparation/
       InfoTheory/
       Certificates/
+      Paper/
       Examples/
       Experimental/
   docs/
@@ -41,8 +43,8 @@ CausalQIF/
 ## Source-of-truth policy
 
 - `lean/CausalQIF.lean` is the build root for the active target.
-- `lean/CausalQIF/Experimental/*` is excluded from the default build until
-  bridge obligations are fully discharged.
+- `lean/CausalQIF/Experimental/*` is retained for compatibility but not imported by
+  the default root import.
 - Lean claims in this repository must stand on the local source tree, theorem
   index, and premise ledger, not on external measurement material.
 - Legacy archive directories are not kept as active workspace trees after

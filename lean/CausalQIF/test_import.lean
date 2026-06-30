@@ -1,3 +1,7 @@
 import Mathlib
-import CausalQIF.InfoTheory
+import CausalQIF
+
 #check CausalQIF.FinitePMF
+#check CausalQIF.probe_action_cmi_le_state_action_cmi_of_condMarkov
+#check CausalQIF.linear_chain_cut_set_bound_of_dSeparated
+#check CausalQIF.Paper.theorem2_linear_chain_cut_set

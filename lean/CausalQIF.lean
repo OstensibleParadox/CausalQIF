@@ -1,26 +1,25 @@
 import CausalQIF.Certificates.Tools
-import CausalQIF.InfoTheory
-import CausalQIF.Certificates.QuantizedBound
+import CausalQIF.Finite.ConditionalMutualInfo
+import CausalQIF.Graph.MarkovBridge
 import CausalQIF.Certificates.IdentifiabilityGap
+import CausalQIF.Certificates.StaticCutBound
+import CausalQIF.Certificates.DynamicProbeBound
+import CausalQIF.Certificates.PACLowerBound
 import CausalQIF.Certificates.CMI_Nonneg
-import CausalQIF.Certificates.DualCertificate
 import CausalQIF.Certificates.ChannelCapacity
-import CausalQIF.Examples.CaseStudy
+import CausalQIF.Examples.LinearChain
 import CausalQIF.Certificates.CutSetBoundExtract
 import CausalQIF.Certificates.TraceRecoverability
 import CausalQIF.Certificates.TraceRecoverabilityBridge
 import CausalQIF.Certificates.QuotientFactorization
 import CausalQIF.Certificates.GeometricTools
 import CausalQIF.Certificates.CoveringBound
-import CausalQIF.Certificates.PACBounds
 import CausalQIF.Certificates.FiniteQueryDecisionImpossibility
 import CausalQIF.Certificates.EntropicEIS
 import CausalQIF.Certificates.SeparatedPackingImpossibility
 import CausalQIF.Certificates.SemanticClosureIff
-import CausalQIF.DSeparation.DAGParser
-import CausalQIF.DSeparation.MarkovGenerator
-import CausalQIF.DSeparation.DSepCMIBridge
-import CausalQIF.Experimental.InfoTheoryBridge
+import CausalQIF.Certificates.QuantizationBound
+import CausalQIF.Paper.MainTheorems
 
 /-!
 # CausalQIF

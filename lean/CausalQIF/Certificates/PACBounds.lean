@@ -214,11 +214,14 @@ theorem pac_lower_bound_conditional
 /--
 Alias matching the paper's Theorem 3 narrative for the combined result.
 -/
-theorem theorem3_pac_lower_bound
+theorem pac_lower_bound_from_conditional_terms
     {K : Nat} {m alpha tau sigma epsilon delta : ℝ}
     (h_ext : PACPaperStatisticalDerivation K m alpha tau sigma epsilon delta) :
     max (pacFanoTerm K alpha tau sigma delta) (pacMissedCellTerm alpha delta) ≤ m :=
   pac_lower_bound_conditional h_ext
+
+@[deprecated pac_lower_bound_from_conditional_terms (since := "2026-06-30")]
+alias theorem3_pac_lower_bound := pac_lower_bound_from_conditional_terms
 
 end
 
