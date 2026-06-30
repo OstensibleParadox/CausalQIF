@@ -20,8 +20,10 @@
 
 ## MVP 4 — Archive discipline
 
-- Historical dual-certificate, CasualQIF, and POPL27 material has been cleaned
-  from active workspace trees after migration.
+- Historical FiniteQuerySandbox, CasualQIF, and POPL27 material has been
+  cleaned from active workspace trees after migration.
+- External measurement material is not an active source root for this Lean
+  artifact.
 - Archive copies are not part of current canonical workspace.
 
 ## MVP 5 — Documentation coherence

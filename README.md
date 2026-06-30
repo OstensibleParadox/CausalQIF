@@ -1,7 +1,8 @@
 # CausalQIF
 
 This repository is the canonical workspace for the finite typed Lean artifact in
-the CausalQIF project.
+the CausalQIF project.  Deployment studies are out of scope here and are not
+part of this repository's formal evidence chain.
 
 ## Canonical structure
 
@@ -23,15 +24,8 @@ CausalQIF/
     THEOREM_DEPENDENCIES.md
     ROADMAP.md
     MVP.md
-  experiments/
-    harness/
-    toy-deployments/
-    certificates/
-    outputs/
   paper/
     main/
-    supplement/
-    figures/
   provenance/
     MIGRATION_MANIFEST.md
 ```
@@ -49,6 +43,8 @@ CausalQIF/
 - `lean/CausalQIF.lean` is the build root for the active target.
 - `lean/CausalQIF/Experimental/*` is excluded from the default build until
   bridge obligations are fully discharged.
+- Lean claims in this repository must stand on the local source tree, theorem
+  index, and premise ledger, not on external measurement material.
 - Legacy archive directories are not kept as active workspace trees after
   cleanup.
 
