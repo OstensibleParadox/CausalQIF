@@ -41,6 +41,6 @@ alias theorem3_pac_lower_bound :=
 
 /-! Typed d-separation to conditional-independence bridge used in the paper narrative. -/
 alias theorem2a_bridge :=
-  CausalQIF.Graph.dSeparation_implies_conditional_independence
+  CausalQIF.Graph.theorem2a_bridge
 
 end CausalQIF.Paper

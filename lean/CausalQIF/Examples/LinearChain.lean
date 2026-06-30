@@ -351,9 +351,6 @@ theorem linear_chain_cut_set_bound_of_dSeparated
 @[deprecated linear_chain_cut_set_bound_of_dSeparated (since := "2026-06-30")]
 alias linear_chain_cut_set_bound_of_dsep_graph := linear_chain_cut_set_bound_of_dSeparated
 
-@[deprecated linear_chain_cut_set_bound_of_dSeparated (since := "2026-06-30")]
-alias linear_chain_cut_set_bound_from_dag := linear_chain_cut_set_bound_of_dSeparated
-
 end EndToEnd
 
 end

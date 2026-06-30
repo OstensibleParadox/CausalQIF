@@ -15,8 +15,8 @@ namespace Graph
 
 open scoped Real
 
-/-! Compatibility name preserved for the typed positive-model bridge from DAG d-separation. -/
-theorem dSeparation_implies_conditional_independence
+/-! Canonical typed positive-model bridge from DAG d-separation to CI. -/
+theorem theorem2a_bridge
     {G : DAG} {Var : ℕ → Type}
     [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)]
     {X Y Z : Finset ℕ} (M : PositiveMarkovModel G Var)

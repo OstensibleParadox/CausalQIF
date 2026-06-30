@@ -12,7 +12,7 @@ This module now keeps only the historical compatibility declaration.
 -/
 
 /-- Historical bridge name, now specialized to the typed positive-model API. -/
-@[deprecated CausalQIF.Graph.dSeparation_implies_conditional_independence (since := "2026-06-30")]
+@[deprecated CausalQIF.Graph.theorem2a_bridge (since := "2026-06-30")]
 theorem dSeparation_implies_conditional_independence
     {G : DAG} {Var : ℕ → Type}
     [∀ n, Fintype (Var n)] [∀ n, DecidableEq (Var n)]
@@ -21,7 +21,7 @@ theorem dSeparation_implies_conditional_independence
   (hnodes : X ∪ Y ∪ Z ⊆ G.nodes)
   (hsep : dSeparates G X Y Z) :
   CIExp M.P X Y Z hnodes :=
-  CausalQIF.Graph.dSeparation_implies_conditional_independence
+  CausalQIF.Graph.theorem2a_bridge
     (M := M) hquery hnodes hsep
 
 end

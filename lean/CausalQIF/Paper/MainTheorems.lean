@@ -17,7 +17,8 @@ export CausalQIF.Paper (theorem1_identifiability_gap proposition2_dynamic_lower_
   proposition2_dynamic_lower_bound_deterministic proposition1_static_entropic_cut_bound
   theorem2_linear_chain_cut_set theorem3_pac_lower_bound theorem2a_bridge)
 
-export CausalQIF.Paper.Compatibility (dSeparation_implies_conditional_independence)
+export CausalQIF.Paper.Compatibility (dSeparation_implies_conditional_independence
+  linear_chain_cut_set_bound_from_dag)
 
 end MainTheorems
 
